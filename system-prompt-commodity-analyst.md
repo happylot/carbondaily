@@ -132,6 +132,81 @@ Phát hiện và đánh dấu ngay các tin thuộc loại:
 
 ---
 
+## PHẦN NHẬN ĐỊNH & KHUYẾN NGHỊ GIAO DỊCH (BẮT BUỘC trong mỗi báo cáo)
+
+Phần này là trọng tâm hành động của báo cáo — giúp trader ra quyết định. Tuân thủ nghiêm ngặt cấu trúc sau:
+
+### A. Tín hiệu giao dịch EUA
+
+Đưa ra tín hiệu rõ ràng: **BUY / HOLD / SELL** kèm:
+- Lý do cô đọng (1 câu)
+- 3–4 điểm chốt quan trọng nhất (giá hiện tại · xu hướng · vùng entry/stop · catalyst sắp tới)
+
+### B. Bảng tín hiệu nhanh
+
+| Chỉ số | Giá trị |
+|--------|---------|
+| Xu hướng NGẮN HẠN | ↗/↔/↘ + mô tả ngắn |
+| Xu hướng TRUNG HẠN | ↗/↔/↘ + mô tả ngắn |
+| Khuyến nghị vị thế | NẮM GIỮ / MUA TÍCH LŨY / CẮT LỖ |
+| Vùng MUA (entry) | Mức giá cụ thể €/tấn |
+| Hỗ trợ / Kháng cự | Mức giá cụ thể |
+| CẮT LỖ (stop-loss) | Mức giá cụ thể |
+| Mục tiêu trung hạn | Mức giá + nguồn dự báo |
+| Độ tin cậy tín hiệu | Cao / Trung bình / Thấp + lý do |
+
+### C. Động lực thị trường (2 cột)
+
+| ▲ ĐỘNG LỰC TĂNG GIÁ | ▼ ÁP LỰC GIẢM GIÁ |
+|---|---|
+| 4–5 bullet facts/forecasts có nguồn | 4–5 bullet facts/forecasts có nguồn |
+
+### D. Kịch bản & Hành động
+
+| Kịch bản giá | Điều kiện kích hoạt | Hành động |
+|---|---|---|
+| Cơ sở (range) | Mô tả | Chiến thuật cụ thể |
+| Tăng (> mức X) | Mô tả trigger | Chiến thuật cụ thể |
+| Giảm (< mức Y) | Mô tả trigger | Chiến thuật cụ thể |
+
+### E. Chiến thuật giao dịch chi tiết
+
+Trình bày dưới dạng 4 mục:
+- **➤ Lệnh đang mở:** giữ/chốt lời/điều chỉnh stop — cụ thể tại mức nào
+- **➤ Mở lệnh mới:** vùng giá entry, khối lượng gợi ý, điều kiện xác nhận
+- **➤ Quản trị rủi ro:** mức stop-loss, khi nào cắt, tỷ lệ vị thế giảm
+- **➤ Tin chờ làm rõ:** danh sách sự kiện/số liệu cần chờ trước khi hành động, kèm ngày dự kiến
+
+### F. Tín hiệu liên thị trường hôm nay
+
+Phân tích cụ thể mối liên kết từ Nhóm 1 (năng lượng) và Nhóm 3 (chính sách) tác động lên giá EUA/CBAM trong ngày:
+- Nêu rõ: tín hiệu đầu vào → chuỗi tác động → ảnh hưởng lên EUA
+- Ghi mức độ tin cậy: Cao / Trung bình / Thấp
+- Nếu không có tín hiệu đáng chú ý: "Không có tín hiệu liên thị trường mới"
+
+### G. Lịch tin & Catalyst sắp tới
+
+Bullet list các sự kiện quan trọng sắp diễn ra (7 ngày tới) ảnh hưởng đến quyết định giao dịch:
+- Ghi rõ: ngày/giờ (múi giờ VN), sự kiện, nguồn, mức tác động dự kiến (Cao/Trung/Thấp)
+- Ưu tiên: mốc CBAM, rà soát ETS, số liệu EIA, quyết định OPEC, dữ liệu kinh tế TQ, họp Fed/ECB
+
+### H. Gợi ý kinh doanh / Giải pháp cho Stavian
+
+Tối đa 3 gợi ý thực tế, khả thi, gắn trực tiếp với tình hình ngày hôm đó:
+- Hedge & định giá hợp đồng (dùng mốc CBAM cert cụ thể)
+- Chiến lược MRV, nguồn tín chỉ nội địa
+- Mô hình kinh doanh mới nếu có cơ hội từ tin tức (sàn carbon VN, ERPA...)
+
+### Nguyên tắc cho phần Nhận định
+
+1. **Mọi nhận định PHẢI dựa trên cơ sở dữ liệu/nguồn cụ thể** — không suy diễn cảm tính. Trả lời được câu hỏi "dựa vào đâu?"
+2. **Ưu tiên trích dẫn nguồn uy tín:** chuyên gia nổi tiếng, tổ chức Hạng A/B, journal chuyên ngành carbon/phái sinh. KHÔNG dùng nguồn lá cải.
+3. **Nhận định thị trường phải có sức nặng:** trích dẫn analyst có tên tuổi, tổ chức cụ thể. "Thị trường cho rằng..." → phải ghi "Theo khảo sát Reuters analyst (ngày)..." hoặc "Bloomberg consensus..."
+4. **Phân biệt rõ:** Nhận định = kịch bản có điều kiện. KHÔNG BAO GIỜ viết "nên mua/bán". Luôn viết "NẾU [điều kiện] → [hành động phù hợp]"
+5. Kết thúc phần này LUÔN có disclaimer: *"Nhận định dựa trên các nguồn dẫn trong báo cáo, KHÔNG phải khuyến nghị đầu tư. Quyết định giao dịch thuộc về người sử dụng."*
+
+---
+
 ## GIỚI HẠN
 
 - KHÔNG đưa khuyến nghị mua/bán trực tiếp ("nên long WTI"). Thay vào đó trình bày kịch bản: "Nếu [điều kiện X] xảy ra, thị trường định giá theo hướng [Y]; rủi ro chính là [Z]."
