@@ -1,0 +1,359 @@
+'use strict';
+/**
+ * collector.js — Thu thập dữ liệu giá và tin tức
+ *
+ * Exports:
+ *   collectPrices()  → Promise<PriceMap>
+ *   collectNews()    → Promise<NewsItem[]>
+ */
+const fetch = require('node-fetch');
+const { parseStringPromise } = require('xml2js');  // parse RSS
+const config = require('./config');
+const { log, logError } = require('./logger');
+
+// ─── Kiểu dữ liệu (JSDoc) ───────────────────────────────────────────────────
+/**
+ * @typedef {Object} PriceData
+ * @property {string}  id          - Mã hợp đồng (VD: 'WTI')
+ * @property {string}  name        - Tên đầy đủ
+ * @property {string}  group       - 'energy' | 'carbon' | 'metals'
+ * @property {string}  unit        - Đơn vị (VD: 'USD/bbl')
+ * @property {number|null} price   - Giá đóng cửa gần nhất
+ * @property {number|null} prevClose - Giá phiên trước
+ * @property {number|null} changeAbs  - Thay đổi tuyệt đối
+ * @property {number|null} changePct  - Thay đổi % (2 chữ số thập phân)
+ * @property {string}  timestamp   - ISO timestamp khi lấy giá
+ * @property {string}  source      - Tên nguồn đã dùng
+ * @property {string}  status      - 'ok' | 'fallback' | 'error'
+ * @property {string}  [error]     - Mô tả lỗi nếu status='error'
+ */
+
+/**
+ * @typedef {Object} NewsItem
+ * @property {string}  id          - UUID slug
+ * @property {string}  title       - Tiêu đề bài viết
+ * @property {string}  url         - URL gốc
+ * @property {string}  summary     - Tóm tắt ≤150 từ
+ * @property {string}  source      - Tên nguồn
+ * @property {string}  group       - 'intl' | 'vn'
+ * @property {string}  commodity   - 'energy' | 'carbon' | 'metals' | 'policy' | 'other'
+ * @property {string}  tier        - 'A' | 'B' | 'C'
+ * @property {string}  publishedAt - ISO date string
+ * @property {boolean} isBreaking  - true nếu khớp từ khóa breaking
+ */
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/** Fetch với timeout */
+async function fetchWithTimeout(url, timeoutMs = 15_000, options = {}) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { ...options, signal: controller.signal });
+    return res;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** Slug an toàn làm ID */
+function makeId(str) {
+  return str.toLowerCase().replace(/[^a-z0-9]+/g, '_').substring(0, 32) + '_' + Date.now();
+}
+
+/** Cắt ngắn text còn tối đa N từ */
+function truncateWords(text, maxWords = 150) {
+  if (!text) return '';
+  const words = text.trim().split(/\s+/);
+  if (words.length <= maxWords) return text.trim();
+  return words.slice(0, maxWords).join(' ') + '…';
+}
+
+/** Phân loại nhóm hàng hóa dựa trên tiêu đề + tóm tắt */
+function classifyCommodity(title = '', summary = '') {
+  const text = (title + ' ' + summary).toLowerCase();
+  const { groupKeywords } = config.news;
+  for (const [group, keywords] of Object.entries(groupKeywords)) {
+    if (keywords.some(kw => text.includes(kw))) return group;
+  }
+  return 'other';
+}
+
+/** Kiểm tra có phải breaking news không */
+function isBreakingNews(title = '', summary = '') {
+  const text = (title + ' ' + summary).toLowerCase();
+  return config.news.breakingKeywords.some(kw => text.includes(kw.toLowerCase()));
+}
+
+/** Kiểm tra bài viết có trong 24h không */
+function isWithin24h(dateStr) {
+  if (!dateStr) return false;
+  const published = new Date(dateStr);
+  if (isNaN(published.getTime())) return false;
+  const now = new Date();
+  const diffMs = now - published;
+  return diffMs >= 0 && diffMs <= 24 * 60 * 60 * 1000;
+}
+
+/** Dedup đơn giản theo URL */
+function deduplicateByUrl(items) {
+  const seen = new Set();
+  return items.filter(item => {
+    if (seen.has(item.url)) return false;
+    seen.add(item.url);
+    return true;
+  });
+}
+
+// ─── Price Parsers ────────────────────────────────────────────────────────────
+
+/**
+ * Parser cho Yahoo Finance API v8 chart endpoint
+ * Trả về { price, prevClose }
+ */
+async function parseYahooPrice(url) {
+  const res = await fetchWithTimeout(url, 10_000, {
+    headers: { 'User-Agent': 'Mozilla/5.0 CarbonIntelligence/1.0' },
+  });
+  if (!res.ok) throw new Error(`Yahoo HTTP ${res.status}`);
+  const data = await res.json();
+
+  const result = data?.chart?.result?.[0];
+  if (!result) throw new Error('Yahoo: kết quả rỗng');
+
+  const meta = result.meta;
+  const price = meta?.regularMarketPrice ?? null;
+  const prevClose = meta?.previousClose ?? meta?.chartPreviousClose ?? null;
+
+  if (price === null) throw new Error('Yahoo: không tìm thấy giá');
+  return { price, prevClose };
+}
+
+/**
+ * Parser dự phòng: Trading Economics trang /commodity/carbon
+ * Scrape giá EUA từ meta tag og:description
+ */
+async function parseTeCarbonPrice(url) {
+  const res = await fetchWithTimeout(url, 12_000, {
+    headers: { 'User-Agent': 'Mozilla/5.0 CarbonIntelligence/1.0' },
+  });
+  if (!res.ok) throw new Error(`TE HTTP ${res.status}`);
+  const html = await res.text();
+
+  // Tìm pattern "XX.XX" hoặc "XX,XX" trong text của trang
+  // TE thường hiển thị giá dạng: "EU Carbon Permits traded at 76.XX..."
+  const match = html.match(/EU\s+Carbon[^0-9]*?([\d]+[.,][\d]+)/i);
+  if (!match) throw new Error('TE: không parse được giá');
+
+  const price = parseFloat(match[1].replace(',', '.'));
+  if (isNaN(price)) throw new Error('TE: giá không hợp lệ');
+  return { price, prevClose: null };
+}
+
+/**
+ * Parser cho Stooq CSV (dùng cho EUA, các hợp đồng châu Âu)
+ * URL format: https://stooq.com/q/d/l/?s=co2.f&i=d
+ * CSV format: Date,Open,High,Low,Close,Volume
+ */
+async function parseStooqCsv(url) {
+  const res = await fetchWithTimeout(url, 10_000, {
+    headers: { 'User-Agent': 'Mozilla/5.0 CarbonIntelligence/1.0' },
+  });
+  if (!res.ok) throw new Error(`Stooq HTTP ${res.status}`);
+  const csv = await res.text();
+
+  const lines = csv.trim().split('\n').filter(l => l.trim() && !l.startsWith('Date'));
+  if (lines.length < 2) throw new Error('Stooq: dữ liệu không đủ');
+
+  const parse = (line) => {
+    const cols = line.split(',');
+    return parseFloat(cols[4]); // Close price
+  };
+
+  const price = parse(lines[lines.length - 1]);
+  const prevClose = parse(lines[lines.length - 2]);
+
+  if (isNaN(price)) throw new Error('Stooq: giá không hợp lệ');
+  return { price, prevClose: isNaN(prevClose) ? null : prevClose };
+}
+
+const PARSERS = {
+  yahoo: parseYahooPrice,
+  te_carbon: parseTeCarbonPrice,
+  stooq_csv: parseStooqCsv,
+};
+
+// ─── Collect Prices ───────────────────────────────────────────────────────────
+
+/**
+ * Thu thập giá cho tất cả hợp đồng trong config
+ * @returns {Promise<Record<string, PriceData>>}
+ */
+async function collectPrices() {
+  log('collector', 'Bắt đầu thu thập giá...');
+  const timestamp = new Date().toISOString();
+  const results = {};
+
+  await Promise.all(
+    config.prices.contracts.map(async (contract) => {
+      let lastError = null;
+      let status = 'error';
+      let priceData = null;
+      let usedSource = null;
+
+      for (let i = 0; i < contract.sources.length; i++) {
+        const src = contract.sources[i];
+        const parserFn = PARSERS[src.parser];
+        if (!parserFn) {
+          log('collector', `[${contract.id}] Parser không hợp lệ: ${src.parser}`);
+          continue;
+        }
+
+        try {
+          log('collector', `[${contract.id}] Thử nguồn ${i === 0 ? 'chính' : 'dự phòng'}: ${src.url.substring(0, 60)}...`);
+          const { price, prevClose } = await parserFn(src.url);
+
+          const changeAbs = (prevClose !== null && price !== null) ? +(price - prevClose).toFixed(4) : null;
+          const changePct = (prevClose !== null && prevClose !== 0 && price !== null)
+            ? +((price - prevClose) / prevClose * 100).toFixed(2)
+            : null;
+
+          priceData = { price, prevClose, changeAbs, changePct };
+          usedSource = src;
+          status = i === 0 ? 'ok' : 'fallback';
+          break;
+        } catch (err) {
+          lastError = err;
+          logError('collector', `[${contract.id}] Nguồn ${i + 1} thất bại: ${err.message}`);
+        }
+      }
+
+      const entry = {
+        id: contract.id,
+        name: contract.name,
+        group: contract.group,
+        unit: contract.unit,
+        price: priceData?.price ?? null,
+        prevClose: priceData?.prevClose ?? null,
+        changeAbs: priceData?.changeAbs ?? null,
+        changePct: priceData?.changePct ?? null,
+        timestamp,
+        source: usedSource ? new URL(usedSource.url).hostname : 'n/a',
+        status,
+        priceNote: contract.priceNote || null,
+      };
+
+      if (status === 'error') {
+        entry.error = lastError?.message ?? 'Không rõ lỗi';
+        log('collector', `[${contract.id}] ⚠ Không có dữ liệu: ${entry.error}`);
+      } else {
+        log('collector', `[${contract.id}] ✓ ${entry.price} ${contract.unit} (${entry.changePct > 0 ? '+' : ''}${entry.changePct ?? '?'}%) [${status}]`);
+      }
+
+      // Kiểm tra ngưỡng cảnh báo
+      if (entry.changePct !== null && Math.abs(entry.changePct) >= config.prices.alertThreshold) {
+        entry.priceAlert = true;
+        log('collector', `[${contract.id}] 🔔 PRICE ALERT: thay đổi ${entry.changePct}% vượt ngưỡng ${config.prices.alertThreshold}%`);
+      }
+
+      results[contract.id] = entry;
+    })
+  );
+
+  const succeeded = Object.values(results).filter(r => r.status !== 'error').length;
+  log('collector', `Thu thập giá hoàn tất: ${succeeded}/${config.prices.contracts.length} hợp đồng thành công`);
+  return results;
+}
+
+// ─── RSS Parser ───────────────────────────────────────────────────────────────
+
+async function fetchRssFeed(source) {
+  const res = await fetchWithTimeout(source.url, 12_000, {
+    headers: { 'User-Agent': 'Mozilla/5.0 CarbonIntelligence/1.0' },
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const xml = await res.text();
+  const parsed = await parseStringPromise(xml, { explicitArray: false, trim: true });
+
+  const channel = parsed?.rss?.channel || parsed?.feed;
+  if (!channel) throw new Error('Không parse được RSS');
+
+  // Hỗ trợ cả RSS 2.0 và Atom
+  const rawItems = channel.item || channel.entry || [];
+  const itemArray = Array.isArray(rawItems) ? rawItems : [rawItems];
+
+  return itemArray.map(item => {
+    const title = item.title?._ || item.title || '';
+    const url = item.link?.href || (Array.isArray(item.link) ? item.link[0] : item.link) || '';
+    const rawDesc = item.description?._ || item.description || item.summary?._ || item.summary || item['content:encoded'] || '';
+    // Loại bỏ HTML tags cho summary
+    const cleanDesc = rawDesc.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    const pubDateStr = item.pubDate || item.updated || item.published || '';
+
+    return { title, url: url.trim(), summary: truncateWords(cleanDesc, 150), publishedAt: pubDateStr };
+  });
+}
+
+// ─── Collect News ─────────────────────────────────────────────────────────────
+
+/**
+ * Thu thập và lọc tin tức từ tất cả RSS sources
+ * @returns {Promise<NewsItem[]>}
+ */
+async function collectNews() {
+  log('collector', 'Bắt đầu thu thập tin tức...');
+  const allItems = [];
+
+  await Promise.all(
+    config.news.sources.map(async (source) => {
+      try {
+        log('collector', `Đang lấy RSS: ${source.name}`);
+        const items = await fetchRssFeed(source);
+
+        // Lọc trong 24h
+        const recent = items.filter(item => isWithin24h(item.publishedAt));
+        log('collector', `${source.name}: ${recent.length}/${items.length} bài trong 24h`);
+
+        // Giới hạn 50 bài/nguồn
+        const limited = recent.slice(0, config.news.maxArticlesPerSource);
+
+        const mapped = limited.map(item => ({
+          id: makeId(item.title),
+          title: item.title,
+          url: item.url,
+          summary: item.summary,
+          source: source.name,
+          group: source.group,
+          commodity: classifyCommodity(item.title, item.summary),
+          tier: source.tier,
+          publishedAt: item.publishedAt,
+          isBreaking: isBreakingNews(item.title, item.summary),
+        }));
+
+        allItems.push(...mapped);
+
+        // Log breaking news ngay
+        mapped.filter(a => a.isBreaking).forEach(a => {
+          log('collector', `🚨 BREAKING: [${a.source}] ${a.title}`);
+        });
+
+      } catch (err) {
+        logError('collector', `Thất bại nguồn ${source.name}: ${err.message}`);
+      }
+    })
+  );
+
+  // Dedup theo URL
+  const deduped = deduplicateByUrl(allItems);
+  log('collector', `Tin tức tổng cộng sau dedup: ${deduped.length} bài`);
+
+  // Sắp xếp: breaking trước, sau đó theo thời gian
+  deduped.sort((a, b) => {
+    if (a.isBreaking !== b.isBreaking) return a.isBreaking ? -1 : 1;
+    return new Date(b.publishedAt) - new Date(a.publishedAt);
+  });
+
+  return deduped;
+}
+
+module.exports = { collectPrices, collectNews };

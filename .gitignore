@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Environment & secrets
+.env
+*.env.local
+
+# Logs
+logs/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+~$*
+
+# IDE
+.vscode/
+.idea/
+
+# Build / output (báo cáo HTML tự tạo hàng ngày)
+# Giữ lại Reports/ để có mẫu, nhưng bỏ qua file lock
+~$*.docx

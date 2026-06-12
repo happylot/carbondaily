@@ -1,375 +1,202 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Carbon Daily News - Bảng Điều Khiển Báo Cáo</title>
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <!-- Custom CSS stylesheet -->
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tin tức thị trường Carbon - 12/06/2026</title>
 </head>
-<body>
-  <div class="app-container">
-    
-    <!-- LEFT PANEL: CONTROLS -->
-    <aside class="sidebar">
-      <header class="sidebar-header">
-        <div class="logo-area">
-          <svg class="logo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 3.5 1 8a7 7 0 0 1-9 10Z"/>
-            <path d="M9 22a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/>
-            <path d="M19 15h.01"/>
-          </svg>
-          <div class="logo-text">
-            <h1>CarbonDaily</h1>
-            <span>Report Builder</span>
-          </div>
-        </div>
-      </header>
+<body style="margin:0;padding:0;background:#eef1f0;font-family:Arial,Helvetica,sans-serif;color:#222;">
+<div style="max-width:820px;margin:0 auto;background:#ffffff;">
 
-      <div class="sidebar-scroll">
-        <!-- Section 1: General Info -->
-        <section class="config-card">
-          <div class="card-header" onclick="toggleCard(this)">
-            <svg class="header-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-            <h2>Cấu hình Chung</h2>
-            <svg class="chevron-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-          </div>
-          <div class="card-body">
-            <div class="form-group">
-              <label for="report-date">Ngày Báo Cáo</label>
-              <input type="date" id="report-date" class="form-control">
-            </div>
-            <div class="form-group">
-              <label for="report-author">Người Báo Cáo</label>
-              <input type="text" id="report-author" class="form-control" placeholder="Người báo cáo..." value="Team KD Tín chỉ carbon, Phòng CLPT — Stavian Industrial Metal">
-            </div>
-          </div>
-        </section>
+  <!-- HEADER -->
+  <div style="background:#14532D;padding:18px 28px 8px;text-align:center;">
+    <div style="font-size:26px;font-weight:bold;color:#ffffff;letter-spacing:.3px;">TIN TỨC HÀNG NGÀY THỊ TRƯỜNG CARBON</div>
+    <div style="font-size:13px;color:#C8E6D4;letter-spacing:2px;margin-top:2px;">CARBON MARKET DAILY NEWS</div>
+  </div>
+  <div style="background:#1E7A46;padding:8px 28px;text-align:center;color:#fff;font-weight:bold;font-size:15px;">Thứ Sáu, ngày 12 tháng 06 năm 2026</div>
+  <div style="padding:6px 28px 0;text-align:center;font-style:italic;color:#666;font-size:12px;">Người báo cáo: Team KD Tín chỉ carbon, Phòng CLPT — Stavian Industrial Metal</div>
 
-        <!-- Section 2: References -->
-        <section class="config-card">
-          <div class="card-header" onclick="toggleCard(this)">
-            <svg class="header-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-            <h2>Nguồn Tham Khảo</h2>
-            <svg class="chevron-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-          </div>
-          <div class="card-body">
-            <div class="add-reference-form">
-              <div class="form-group">
-                <label for="ref-title">Tên Nguồn</label>
-                <input type="text" id="ref-title" class="form-control" placeholder="Ví dụ: Carbon Pulse">
-              </div>
-              <div class="form-group">
-                <label for="ref-url">Đường Dẫn (URL)</label>
-                <input type="url" id="ref-url" class="form-control" placeholder="Ví dụ: https://carbon-pulse.com/...">
-              </div>
-              <button type="button" id="btn-add-ref" class="btn btn-secondary btn-block">Thêm Nguồn</button>
-            </div>
-            <div class="reference-list-container">
-              <label>Danh sách nguồn hiện tại:</label>
-              <ul id="reference-list" class="item-list">
-                <!-- Dynamically populated -->
-              </ul>
-            </div>
-          </div>
-        </section>
+  <div style="padding:6px 28px 28px;">
 
-        <!-- Section 3: Prices & Trends -->
-        <section class="config-card">
-          <div class="card-header" onclick="toggleCard(this)">
-            <svg class="header-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-            <h2>Giá & Xu Hướng Thị Trường</h2>
-            <svg class="chevron-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-          </div>
-          <div class="card-body">
-            <div class="price-editor-grid">
-              <div class="form-group">
-                <label for="price-eua">EUA (EU ETS)</label>
-                <input type="text" id="price-eua" class="form-control" value="76,55 €/tấn">
-              </div>
-              <div class="form-group">
-                <label for="price-eua-change">EUA Thay Đổi</label>
-                <input type="text" id="price-eua-change" class="form-control" value="▼ 0,53% so 8/6">
-              </div>
-              <div class="form-group col-span-2">
-                <label for="price-eua-note">EUA Ghi Chú</label>
-                <input type="text" id="price-eua-note" class="form-control" value="+3,53%/4 tuần; +7,83%/12 tháng; đỉnh T4/2026 (77,46 €)">
-              </div>
-              <div class="form-group">
-                <label for="price-range">Vùng Dao Động</label>
-                <input type="text" id="price-range" class="form-control" value="75–80 €/tấn">
-              </div>
-              <div class="form-group">
-                <label for="price-range-change">Thay Đổi Vùng</label>
-                <input type="text" id="price-range-change" class="form-control" value="↔ Đi ngang">
-              </div>
-              <div class="form-group col-span-2">
-                <label for="price-range-note">Vùng Ghi Chú</label>
-                <input type="text" id="price-range-note" class="form-control" value="Rangebound đến kỳ rà soát ETS tháng 7 (Energy Aspects)">
-              </div>
-              <div class="form-group">
-                <label for="price-forecast">Dự Báo TB 2026</label>
-                <input type="text" id="price-forecast" class="form-control" value="~92,5 €/tấn">
-              </div>
-              <div class="form-group">
-                <label for="price-forecast-change">Thay Đổi DB</label>
-                <input type="text" id="price-forecast-change" class="form-control" value="Hạ từ 100 €">
-              </div>
-              <div class="form-group col-span-2">
-                <label for="price-forecast-note">Dự Báo Ghi Chú</label>
-                <input type="text" id="price-forecast-note" class="form-control" value="Đồng thuận khảo sát Reuters (hạ ~7,6% do bất định chính sách)">
-              </div>
-              <div class="form-group">
-                <label for="price-cbam">CBAM Cert (Q1/26)</label>
-                <input type="text" id="price-cbam" class="form-control" value=">75 €/tấn CO₂">
-              </div>
-              <div class="form-group">
-                <label for="price-cbam-change">CBAM Thay Đổi</label>
-                <input type="text" id="price-cbam-change" class="form-control" value="—">
-              </div>
-              <div class="form-group col-span-2">
-                <label for="price-cbam-note">CBAM Ghi Chú</label>
-                <input type="text" id="price-cbam-note" class="form-control" value="Mốc công bố tiếp: 6/7, 5/10, đầu 1/2027 (EU)">
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Section 4: News Summary (Phần 1 Summary & Phần 3 Detail) -->
-        <section class="config-card">
-          <div class="card-header" onclick="toggleCard(this)">
-            <svg class="header-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-            <h2>Quản Lý Tin Tức Chi Tiết</h2>
-            <svg class="chevron-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-          </div>
-          <div class="card-body">
-            <div class="tabs-header">
-              <button type="button" class="tab-btn active" id="btn-tab-intl" onclick="switchNewsTab('intl')">Quốc Tế</button>
-              <button type="button" class="tab-btn" id="btn-tab-vn" onclick="switchNewsTab('vn')">Việt Nam</button>
-            </div>
-            
-            <div class="tab-content" id="news-editor-area">
-              <div class="add-news-form">
-                <div class="form-group">
-                  <label for="news-title">Tiêu Đề / Tóm Tắt Ngắn (Bold)</label>
-                  <input type="text" id="news-title" class="form-control" placeholder="Ví dụ: Giá EUA giảm nhẹ">
-                </div>
-                <div class="form-group">
-                  <label for="news-desc">Nội Dung Chi Tiết (Phần 3)</label>
-                  <textarea id="news-desc" class="form-control" rows="3" placeholder="Chi tiết tin tức..."></textarea>
-                </div>
-                <div class="form-group">
-                  <label for="news-ref-select">Chọn Nguồn Trích Dẫn</label>
-                  <select id="news-ref-select" class="form-control">
-                    <!-- Synced dynamically with references list -->
-                  </select>
-                </div>
-                <button type="button" id="btn-add-news" class="btn btn-secondary btn-block">Thêm Tin Tức</button>
-              </div>
-
-              <div class="news-list-container">
-                <label>Các tin đã tạo:</label>
-                <ul id="news-list" class="item-list news-items-list">
-                  <!-- Dynamically populated news list -->
-                </ul>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Section 5: Signal & Trade Recommendation -->
-        <section class="config-card">
-          <div class="card-header" onclick="toggleCard(this)">
-            <svg class="header-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
-            <h2>Tín Hiệu & Khuyến Nghị</h2>
-            <svg class="chevron-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-          </div>
-          <div class="card-body">
-            <div class="form-group">
-              <label>Tín Hiệu Hôm Nay</label>
-              <div class="signal-buttons">
-                <button type="button" class="btn-signal signal-hold active" data-signal="HOLD">NẮM GIỮ (HOLD)</button>
-                <button type="button" class="btn-signal signal-buy" data-signal="BUY">MUA (BUY)</button>
-                <button type="button" class="btn-signal signal-sell" data-signal="SELL">BÁN (SELL)</button>
-              </div>
-            </div>
-            
-            <div class="form-group">
-              <label for="signal-desc">Mô tả Tín hiệu phụ (Dưới nhãn lớn)</label>
-              <input type="text" id="signal-desc" class="form-control" value="Mua tích lũy 75–76 €  ·  Trung hạn thiên TĂNG  ·  Cắt lỗ &lt; 74 €">
-            </div>
-
-            <div class="price-editor-grid">
-              <div class="form-group">
-                <label for="trend-short">Xu hướng Ngắn hạn</label>
-                <input type="text" id="trend-short" class="form-control" value="↔ Đi ngang (75–80 €/tấn)">
-              </div>
-              <div class="form-group">
-                <label for="trend-mid">Xu hướng Trung hạn</label>
-                <input type="text" id="trend-mid" class="form-control" value="↗ Thiên TĂNG">
-              </div>
-              <div class="form-group">
-                <label for="pos-rec">Khuyến nghị vị thế</label>
-                <input type="text" id="pos-rec" class="form-control" value="NẮM GIỮ + Mua tích lũy">
-              </div>
-              <div class="form-group">
-                <label for="buy-zone">Vùng mua (Entry)</label>
-                <input type="text" id="buy-zone" class="form-control" value="75 – 76 €/tấn">
-              </div>
-              <div class="form-group">
-                <label for="support-resist">Hỗ trợ / Kháng cự</label>
-                <input type="text" id="support-resist" class="form-control" value="75 € / 80 €/tấn">
-              </div>
-              <div class="form-group">
-                <label for="stop-loss">Cắt lỗ (Stop-loss)</label>
-                <input type="text" id="stop-loss" class="form-control" value="&lt; 74 €/tấn">
-              </div>
-              <div class="form-group">
-                <label for="target-mid">Mục tiêu trung hạn</label>
-                <input type="text" id="target-mid" class="form-control" value="~92 €/tấn (TB 2026 – Reuters)">
-              </div>
-              <div class="form-group">
-                <label for="signal-trust">Độ tin cậy tín hiệu</label>
-                <input type="text" id="signal-trust" class="form-control" value="Trung bình — chờ rà soát ETS 7/2026">
-              </div>
-            </div>
-
-            <!-- Market Drivers: Drivers Up vs Drivers Down -->
-            <div class="market-drivers-section">
-              <label>Động lực tăng / giảm giá</label>
-              <div class="drivers-edit-grid">
-                <div>
-                  <span class="driver-label up">▲ Động lực tăng</span>
-                  <textarea id="drivers-up" class="form-control" rows="4" placeholder="Một ý một dòng..."></textarea>
-                </div>
-                <div>
-                  <span class="driver-label down">▼ Áp lực giảm</span>
-                  <textarea id="drivers-down" class="form-control" rows="4" placeholder="Một ý một dòng..."></textarea>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Section 6: Scenarios & Tactics -->
-        <section class="config-card">
-          <div class="card-header" onclick="toggleCard(this)">
-            <svg class="header-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
-            <h2>Kịch Bản & Chiến Thuật Giao Dịch</h2>
-            <svg class="chevron-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-          </div>
-          <div class="card-body">
-            <!-- Scenarios -->
-            <h3 class="subsection-title">Kịch Bản Giá & Hành Động</h3>
-            <div class="form-group">
-              <label for="scen-base-val">Kịch bản 75-80 € (Cơ sở)</label>
-              <input type="text" id="scen-base-val" class="form-control" value="GIỮ vị thế, mua dần 75–76 €; chưa chốt lời.">
-            </div>
-            <div class="form-group">
-              <label for="scen-up-val">Kịch bản &gt; 80 € (Thắt chặt/Tăng)</label>
-              <input type="text" id="scen-up-val" class="form-control" value="TĂNG vị thế; chốt một phần khi tiệm cận mục tiêu ~92 €.">
-            </div>
-            <div class="form-group">
-              <label for="scen-down-val">Kịch bản &lt; 74 € (Nới lỏng/Giảm)</label>
-              <input type="text" id="scen-down-val" class="form-control" value="GIẢM/CẮT vị thế; chờ thị trường ổn định rồi vào lại.">
-            </div>
-
-            <!-- Tactics -->
-            <h3 class="subsection-title">Chiến thuật cụ thể</h3>
-            <div class="form-group">
-              <label for="tactic-open">Lệnh đang mở (đang nắm giữ)</label>
-              <textarea id="tactic-open" class="form-control" rows="2">TIẾP TỤC NẮM GIỮ, chưa chốt — trung hạn nghiêng tăng. Theo dõi mốc hỗ trợ ~75 € và kháng cự ~80 €.</textarea>
-            </div>
-            <div class="form-group">
-              <label for="tactic-new">Mở lệnh mới</label>
-              <textarea id="tactic-new" class="form-control" rows="2">ưu tiên mua tích lũy vùng 75–76 €/tấn; tránh đuổi giá sát 80 € ngay trước tin rà soát ETS tháng 7.</textarea>
-            </div>
-            <div class="form-group">
-              <label for="tactic-risk">Quản trị rủi ro</label>
-              <textarea id="tactic-risk" class="form-control" rows="2">cân nhắc giảm vị thế nếu giá phá thủng ~74 € kèm tín hiệu EC nới lỏng mạnh ETS.</textarea>
-            </div>
-            <div class="form-group">
-              <label for="tactic-pending">Tin chờ làm rõ</label>
-              <textarea id="tactic-pending" class="form-control" rows="2">(1) đề xuất rà soát EU ETS của EC (tháng 7); (2) mốc công bố giá chứng chỉ CBAM 6/7.</textarea>
-            </div>
-
-            <!-- Catalysts & Solutions -->
-            <h3 class="subsection-title">Lịch Tin tức (Catalysts)</h3>
-            <div class="form-group">
-              <label for="catalyst-items">Các sự kiện (Mỗi ý một dòng, format: [Ngày/Giờ]: [Nội dung] | [Tên nguồn] | [URL nguồn])</label>
-              <textarea id="catalyst-items" class="form-control" rows="4" placeholder="10/6: Hội nghị khí hậu... | Carbon Pulse | https://..."></textarea>
-            </div>
-
-            <h3 class="subsection-title">Gợi ý Kinh Doanh / Giải pháp</h3>
-            <div class="form-group">
-              <label for="solution-items">Các giải pháp đề xuất (Mỗi ý một dòng, format: [Từ khóa đậm]: [Chi tiết])</label>
-              <textarea id="solution-items" class="form-control" rows="4" placeholder="Hedge & định giá: mua tín chỉ bảo vệ giá trị..."></textarea>
-            </div>
-          </div>
-        </section>
-      </div>
-
-      <!-- Action Panel -->
-      <div class="action-footer">
-        <button type="button" id="btn-download" class="btn btn-primary btn-pulse">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-          Tải Báo cáo (HTML)
-        </button>
-        <button type="button" id="btn-copy" class="btn btn-secondary">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-          Sao chép HTML
-        </button>
-      </div>
-    </aside>
-
-    <!-- RIGHT PANEL: PREVIEW -->
-    <main class="preview-pane">
-      <div class="preview-header">
-        <div class="mail-headers">
-          <div class="mail-header-row">
-            <span class="label">Người gửi:</span>
-            <span class="value font-semibold">Stavian CLPT - Carbon Desk &lt;phuc189@gmail.com&gt;</span>
-          </div>
-          <div class="mail-header-row">
-            <span class="label">Người nhận:</span>
-            <span class="value font-semibold">xoan.vu@stavianmetal.com</span>
-          </div>
-          <div class="mail-header-row">
-            <span class="label">Tiêu đề:</span>
-            <span class="value subject-val" id="preview-subject">Tin tức thị trường Carbon - 10/06/2026</span>
-          </div>
-        </div>
-        <div class="preview-actions">
-          <div class="view-toggles">
-            <button type="button" class="btn-toggle active" id="btn-view-desktop">Desktop</button>
-            <button type="button" class="btn-toggle" id="btn-view-mobile">Mobile</button>
-          </div>
-        </div>
-      </div>
-      
-      <div class="preview-body-container">
-        <!-- Live Preview Iframe -->
-        <div class="iframe-wrapper" id="preview-wrapper">
-          <iframe id="preview-iframe" title="Xem trước báo cáo"></iframe>
-        </div>
-      </div>
-    </main>
-
+  <!-- DATA NOTE -->
+  <div style="background:#FCF3E2;border:1px solid #E5C97B;color:#7A5B12;padding:8px 12px;margin:14px 0 4px;font-size:12.5px;border-radius:4px;">
+    <b>⚠ Lưu ý dữ liệu:</b> Giá EUA được xác minh đến <b>03/06/2026</b> (Trading Economics — bản cập nhật mới nhất tính đến thời điểm lập báo cáo). Chưa có dữ liệu chốt phiên chính thức cho hôm nay (12/6); các mức giá nêu dưới đây phản ánh phiên xác minh gần nhất, KHÔNG suy diễn giá cho hôm nay.
   </div>
 
-  <!-- Notification Toast -->
-  <div class="toast" id="toast-notification">
-    <div class="toast-content">
-      <svg class="toast-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-      <span class="toast-message" id="toast-msg">Đã sao chép vào bộ nhớ tạm!</span>
-    </div>
+  <!-- ===== PHẦN 1 ===== -->
+  <h2 style="font-size:17px;color:#1E7A46;border-bottom:3px solid #1E7A46;padding-bottom:5px;margin:18px 0 12px;">PHẦN 1 — TIN TỨC CHÍNH / NỔI BẬT TRONG NGÀY</h2>
+
+  <table style="border-collapse:collapse;width:100%;font-size:13px;">
+    <tr style="background:#1E7A46;color:#fff;">
+      <th style="border:1px solid #ccc;padding:6px 8px;text-align:left;">Sản phẩm</th>
+      <th style="border:1px solid #ccc;padding:6px 8px;text-align:left;">Giá</th>
+      <th style="border:1px solid #ccc;padding:6px 8px;text-align:left;">Thay đổi</th>
+      <th style="border:1px solid #ccc;padding:6px 8px;text-align:left;">Ghi chú</th>
+    </tr>
+    <tr>
+      <td style="border:1px solid #ccc;padding:6px 8px;font-weight:bold;">EUA (EU ETS)</td>
+      <td style="border:1px solid #ccc;padding:6px 8px;font-weight:bold;">80,10 €/tấn</td>
+      <td style="border:1px solid #ccc;padding:6px 8px;color:#1E7A46;font-weight:bold;">▲ 0,78% so 2/6</td>
+      <td style="border:1px solid #ccc;padding:6px 8px;">Xác minh đến 3/6/2026; +9,67%/tháng; +10,32%/12 tháng. ATH 105,73 € (T2/2023)</td>
+    </tr>
+    <tr style="background:#f7f9f8;">
+      <td style="border:1px solid #ccc;padding:6px 8px;font-weight:bold;">Vùng dao động</td>
+      <td style="border:1px solid #ccc;padding:6px 8px;font-weight:bold;">77–82 €/tấn</td>
+      <td style="border:1px solid #ccc;padding:6px 8px;color:#1E7A46;">↗ Đã vượt mốc 80 €</td>
+      <td style="border:1px solid #ccc;padding:6px 8px;">Bứt khỏi vùng 75–80 € của tháng 5; test kháng cự mới trước rà soát ETS 7/2026</td>
+    </tr>
+    <tr>
+      <td style="border:1px solid #ccc;padding:6px 8px;font-weight:bold;">Dự báo (TE)</td>
+      <td style="border:1px solid #ccc;padding:6px 8px;font-weight:bold;">81,25 € cuối quý · 88,10 €/12 th</td>
+      <td style="border:1px solid #ccc;padding:6px 8px;color:#1E7A46;">↗ Thiên tăng</td>
+      <td style="border:1px solid #ccc;padding:6px 8px;">Mô hình vĩ mô & kỳ vọng analyst (Trading Economics)</td>
+    </tr>
+    <tr style="background:#f7f9f8;">
+      <td style="border:1px solid #ccc;padding:6px 8px;font-weight:bold;">CBAM cert (Q1/26)</td>
+      <td style="border:1px solid #ccc;padding:6px 8px;font-weight:bold;">75,36 €/tấn CO₂</td>
+      <td style="border:1px solid #ccc;padding:6px 8px;color:#555;">—</td>
+      <td style="border:1px solid #ccc;padding:6px 8px;">Tính theo TB EUA Q4/2025; mốc công bố tiếp ~6/7, 5/10 (EU)</td>
+    </tr>
+    <tr>
+      <td style="border:1px solid #ccc;padding:6px 8px;font-weight:bold;">TTF Gas / Than</td>
+      <td style="border:1px solid #ccc;padding:6px 8px;font-weight:bold;">49,02 € · 141,30 $</td>
+      <td style="border:1px solid #ccc;padding:6px 8px;color:#1E7A46;">▲ 2,96% (TTF)</td>
+      <td style="border:1px solid #ccc;padding:6px 8px;">Giá khí tăng → hỗ trợ fuel-switching, nâng đỡ nhu cầu EUA</td>
+    </tr>
+  </table>
+  <div style="font-size:11px;font-style:italic;color:#777;margin:5px 0 0;">Nguồn giá: <a href="https://tradingeconomics.com/commodity/carbon" style="color:#1E7A46;">Trading Economics</a> (EUA, TTF, than — cập nhật 3/6/2026), <a href="https://carboncredits.com/carbon-prices-today/" style="color:#1E7A46;">CarbonCredits.com</a>, <a href="https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism_en" style="color:#1E7A46;">EC (CBAM)</a>.</div>
+
+  <div style="background:#E6F2EA;font-weight:bold;color:#14532D;padding:5px 10px;margin:16px 0 8px;font-size:14px;">QUỐC TẾ</div>
+  <ul style="margin:0;padding-left:20px;font-size:13.5px;line-height:1.5;">
+    <li style="margin-bottom:7px;"><b>EUA vượt mốc 80 €:</b> EU Carbon Permits tăng lên 80,10 €/tấn (phiên 3/6/2026), +0,78% so phiên trước; trong 1 tháng tăng 9,67% và 12 tháng tăng 10,32% — bứt khỏi vùng tích lũy 75–80 € của tháng 5. <a href="https://tradingeconomics.com/commodity/carbon" style="color:#1E7A46;font-style:italic;">(Trading Economics, dữ liệu 3/6)</a></li>
+    <li style="margin-bottom:7px;"><b>EC khởi động cải tổ MSR — bước cải cách ETS đầu tiên:</b> Uỷ ban châu Âu đề xuất <b>dừng huỷ hạn ngạch dư trên ngưỡng 400 triệu EUA</b>, giữ lại làm "đệm" chống tăng giá thay vì vô hiệu hoá. Cao uỷ Khí hậu Wopke Hoekstra gọi đây là bước đầu hiện đại hoá thị trường carbon. <a href="https://www.esgtoday.com/eu-commission-launches-first-of-planned-ets-reforms-amid-industry-pressure/" style="color:#1E7A46;font-style:italic;">(ESG Today, 2/4/2026)</a></li>
+    <li style="margin-bottom:7px;"><b>Rà soát toàn diện EU ETS dự kiến 7/2026:</b> Chủ tịch EC von der Leyen cam kết trình gói rà soát ETS toàn diện trong tháng 7/2026 (cap, phân bổ miễn phí, tích hợp CDR, ETS2, CBAM) — chất xúc tác chính sách lớn nhất nửa cuối năm. <a href="https://www.esgtoday.com/eu-commission-launches-first-of-planned-ets-reforms-amid-industry-pressure/" style="color:#1E7A46;font-style:italic;">(ESG Today, 4/2026)</a></li>
+    <li style="margin-bottom:7px;"><b>Áp lực chi phí năng lượng:</b> giá khí TTF (~49 €/MWh) và căng thẳng địa chính trị (xung đột tại Trung Đông) đẩy chi phí năng lượng lên, vừa hỗ trợ fuel-switching (nâng cầu EUA) vừa khiến nhiều nước thành viên hối thúc EC nới áp lực ETS cho công nghiệp. <a href="https://www.esgtoday.com/eu-commission-launches-first-of-planned-ets-reforms-amid-industry-pressure/" style="color:#1E7A46;font-style:italic;">(ESG Today)</a></li>
+    <li style="margin-bottom:7px;"><b>MSR siết nguồn cung trung hạn:</b> đề xuất nâng intake rate hướng tới 36% (thay vì về 12% từ 2031) và hạ ngưỡng trên từ 833 triệu EUA — củng cố luận điểm thị trường "thiếu cung cơ bản". <a href="https://www.europarl.europa.eu/thinktank/en/document/EPRS_BRI(2026)782615" style="color:#1E7A46;font-style:italic;">(European Parliament, 2026)</a></li>
+  </ul>
+
+  <div style="background:#E6F2EA;font-weight:bold;color:#14532D;padding:5px 10px;margin:14px 0 8px;font-size:14px;">VIỆT NAM</div>
+  <ul style="margin:0;padding-left:20px;font-size:13.5px;line-height:1.5;">
+    <li style="margin-bottom:7px;"><b>Sàn carbon vận hành thí điểm ngay trong tháng 6/2026:</b> Phó Chủ tịch UBCKNN xác nhận thị trường tín chỉ carbon sẽ được triển khai thí điểm trong tháng 6; hệ thống cơ sở dữ liệu đăng ký hạn ngạch & tín chỉ đã cơ bản hoàn thành, sẵn sàng vận hành trên nền tảng HNX. Pilot kéo dài đến hết 2028, chính thức từ 2029. <a href="https://vnexpress.net/san-giao-dich-carbon-du-kien-duoc-thi-diem-trong-thang-6-5082310.html" style="color:#1E7A46;font-style:italic;">(VnExpress)</a></li>
+    <li style="margin-bottom:7px;"><b>Khung pháp lý đã đủ:</b> Nghị định 29/2026/NĐ-CP (19/1/2026) về sàn giao dịch carbon; Quyết định 263/QĐ-TTg (9/2/2026) phê duyệt tổng hạn ngạch phát thải thí điểm 2025–2026. <a href="https://vneconomy.vn/chuan-bi-san-sang-cac-dieu-kien-van-hanh-thi-truong-carbon-tai-viet-nam.htm" style="color:#1E7A46;font-style:italic;">(VnEconomy)</a></li>
+    <li style="margin-bottom:7px;"><b>Đàm phán bán 5,15 triệu tín chỉ carbon rừng ngay trong tháng 6:</b> Phó Thủ tướng Hồ Quốc Dũng giao Bộ NN&MT đàm phán ERPA chuyển nhượng hơn 5 triệu tín chỉ carbon rừng Tây Nguyên & Nam Trung Bộ cho Tổ chức Emergent (Liên minh LEAF), giá tối thiểu 10 USD/tín chỉ, giai đoạn 2021–2025; toàn bộ tính vào NDC. <a href="https://vietnamfinance.vn/ddam-phan-ban-5-trieu-tin-chi-carbon-rung-trong-thang-6-2026-d144371.html" style="color:#1E7A46;font-style:italic;">(VietnamFinance, 5/5/2026)</a></li>
+    <li style="margin-bottom:7px;"><b>CBAM vận hành đầy đủ từ 1/1/2026:</b> giá chứng chỉ Q1/2026 ở mức 75,36 €/tấn CO₂; DN phát thải thấp hoặc nắm tín chỉ hợp lệ có lợi thế tiếp cận thị trường EU. Ngành thép (VNSTEEL) đã kiểm kê khí nhà kính và nghiên cứu trồng rừng tạo tín chỉ. <a href="https://vneconomy.vn/kiem-ke-khi-nha-kinh-2026-bien-thach-thuc-cbam-thanh-loi-the-cho-doanh-nghiep-xuat-khau.htm" style="color:#1E7A46;font-style:italic;">(VnEconomy)</a></li>
+    <li style="margin-bottom:7px;"><b>Bối cảnh khu vực:</b> Đài Loan bắt đầu thu phí carbon (hàng triệu USD) từ các DN phát thải lớn để lập quỹ giảm phát thải — xu hướng định giá carbon lan rộng tại châu Á, áp lực cạnh tranh lên hàng xuất khẩu Việt Nam. <a href="https://vietnamfinance.vn/dai-loan-bat-dau-thu-hang-trieu-usd-phi-carbon-tu-dn-phat-thai-lon-d145573.html" style="color:#1E7A46;font-style:italic;">(VietnamFinance, 31/5/2026)</a></li>
+  </ul>
+
+  <!-- ===== PHẦN 2 ===== -->
+  <h2 style="font-size:17px;color:#14532D;border-bottom:3px solid #14532D;padding-bottom:5px;margin:24px 0 12px;">PHẦN 2 — NHẬN ĐỊNH &amp; KHUYẾN NGHỊ GIAO DỊCH</h2>
+
+  <div style="background:#1E7A46;color:#fff;text-align:center;padding:12px;border-radius:4px;">
+    <div style="font-size:20px;font-weight:bold;letter-spacing:.5px;">TÍN HIỆU HÔM NAY: NẮM GIỮ (HOLD) — thiên TĂNG</div>
+    <div style="font-size:13px;color:#E6F2EA;margin-top:3px;">EUA vượt 80 € (xác minh 3/6)  ·  MSR siết cung  ·  Trung hạn TĂNG  ·  Cắt lỗ &lt; 76 €</div>
   </div>
 
-  <!-- Application Logic -->
-  <script src="app.js"></script>
+  <div style="background:#EAF1FB;font-weight:bold;color:#14532D;padding:5px 10px;margin:14px 0 8px;font-size:14px;">Bảng tín hiệu nhanh</div>
+  <table style="border-collapse:collapse;width:100%;font-size:13px;">
+    <tr><td style="border:1px solid #ccc;padding:6px 8px;background:#f2f2f2;font-weight:bold;width:34%;">Xu hướng NGẮN HẠN</td><td style="border:1px solid #ccc;padding:6px 8px;background:#E8F5EC;color:#1E7A46;font-weight:bold;">↗ Tăng, vừa vượt 80 €, dò kháng cự mới</td></tr>
+    <tr><td style="border:1px solid #ccc;padding:6px 8px;background:#f2f2f2;font-weight:bold;">Xu hướng TRUNG HẠN</td><td style="border:1px solid #ccc;padding:6px 8px;background:#E8F5EC;color:#1E7A46;font-weight:bold;">↗ Thiên TĂNG (MSR siết cung, thiếu cung cơ bản)</td></tr>
+    <tr><td style="border:1px solid #ccc;padding:6px 8px;background:#f2f2f2;font-weight:bold;">KHUYẾN NGHỊ VỊ THẾ</td><td style="border:1px solid #ccc;padding:6px 8px;background:#E8F5EC;color:#1E7A46;font-weight:bold;">NẮM GIỮ + Mua khi điều chỉnh</td></tr>
+    <tr><td style="border:1px solid #ccc;padding:6px 8px;background:#f2f2f2;font-weight:bold;">Vùng MUA (entry)</td><td style="border:1px solid #ccc;padding:6px 8px;color:#14532D;font-weight:bold;">77 – 79 €/tấn (khi hồi)</td></tr>
+    <tr><td style="border:1px solid #ccc;padding:6px 8px;background:#f2f2f2;font-weight:bold;">Hỗ trợ / Kháng cự</td><td style="border:1px solid #ccc;padding:6px 8px;font-weight:bold;">77 € / 82 – 85 €/tấn</td></tr>
+    <tr><td style="border:1px solid #ccc;padding:6px 8px;background:#f2f2f2;font-weight:bold;">CẮT LỖ (stop-loss)</td><td style="border:1px solid #ccc;padding:6px 8px;background:#FDECEA;color:#C0392B;font-weight:bold;">&lt; 76 €/tấn</td></tr>
+    <tr><td style="border:1px solid #ccc;padding:6px 8px;background:#f2f2f2;font-weight:bold;">Mục tiêu trung hạn</td><td style="border:1px solid #ccc;padding:6px 8px;color:#14532D;font-weight:bold;">~81–88 €/tấn (dự báo TE cuối quý / 12 tháng)</td></tr>
+    <tr><td style="border:1px solid #ccc;padding:6px 8px;background:#f2f2f2;font-weight:bold;">Độ tin cậy tín hiệu</td><td style="border:1px solid #ccc;padding:6px 8px;background:#FCF3E2;color:#B7791F;font-weight:bold;">Trung bình — chờ đề xuất rà soát ETS 7/2026</td></tr>
+  </table>
+
+  <div style="background:#EAF1FB;font-weight:bold;color:#14532D;padding:5px 10px;margin:14px 0 8px;font-size:14px;">Động lực thị trường</div>
+  <table style="border-collapse:collapse;width:100%;font-size:13px;">
+    <tr>
+      <th style="border:1px solid #ccc;padding:6px 8px;background:#1E7A46;color:#fff;width:50%;text-align:left;">▲ ĐỘNG LỰC TĂNG GIÁ</th>
+      <th style="border:1px solid #ccc;padding:6px 8px;background:#C0392B;color:#fff;width:50%;text-align:left;">▼ ÁP LỰC GIẢM GIÁ</th>
+    </tr>
+    <tr>
+      <td style="border:1px solid #ccc;padding:8px;background:#E8F5EC;vertical-align:top;">• EC dừng huỷ hạn ngạch dư (MSR) → siết cung<br>• Thị trường "fundamentally short" 2026<br>• Giá khí TTF tăng → fuel-switching<br>• Giá đã bứt khỏi vùng 75–80 €, đà tăng</td>
+      <td style="border:1px solid #ccc;padding:8px;background:#FDECEA;vertical-align:top;">• Áp lực công nghiệp xin nới lỏng ETS<br>• Bất định trước đề xuất rà soát ETS 7/2026<br>• Nhu cầu yếu nếu kinh tế EU chậm lại<br>• Khả năng chốt lời sau nhịp tăng mạnh</td>
+    </tr>
+  </table>
+
+  <div style="background:#EAF1FB;font-weight:bold;color:#14532D;padding:5px 10px;margin:14px 0 8px;font-size:14px;">Kịch bản &amp; hành động</div>
+  <table style="border-collapse:collapse;width:100%;font-size:13px;">
+    <tr>
+      <th style="border:1px solid #ccc;padding:6px 8px;background:#14532D;color:#fff;width:38%;text-align:left;">KỊCH BẢN GIÁ</th>
+      <th style="border:1px solid #ccc;padding:6px 8px;background:#14532D;color:#fff;text-align:left;">HÀNH ĐỘNG</th>
+    </tr>
+    <tr>
+      <td style="border:1px solid #ccc;padding:6px 8px;background:#FCF3E2;color:#B7791F;font-weight:bold;">77–82 € (cơ sở)</td>
+      <td style="border:1px solid #ccc;padding:6px 8px;">GIỮ vị thế, mua bổ sung khi giá hồi về 77–79 €; chưa chốt lời.</td>
+    </tr>
+    <tr>
+      <td style="border:1px solid #ccc;padding:6px 8px;background:#E8F5EC;color:#1E7A46;font-weight:bold;">&gt; 82 € + ETS thắt chặt/MSR mạnh</td>
+      <td style="border:1px solid #ccc;padding:6px 8px;">TĂNG vị thế; chốt một phần khi tiệm cận ~85–88 €.</td>
+    </tr>
+    <tr>
+      <td style="border:1px solid #ccc;padding:6px 8px;background:#FDECEA;color:#C0392B;font-weight:bold;">&lt; 76 € + EC nới lỏng mạnh</td>
+      <td style="border:1px solid #ccc;padding:6px 8px;">GIẢM/CẮT vị thế; chờ thị trường ổn định rồi vào lại.</td>
+    </tr>
+  </table>
+
+  <div style="background:#EAF1FB;font-weight:bold;color:#14532D;padding:5px 10px;margin:14px 0 8px;font-size:14px;">Chiến thuật giao dịch (mua/bán)</div>
+  <ul style="margin:0;padding-left:20px;font-size:13.5px;line-height:1.55;list-style:none;">
+    <li style="margin-bottom:6px;"><b style="color:#14532D;">➤ Lệnh đang mở (đang nắm giữ tín chỉ):</b> <b style="color:#1E7A46;">TIẾP TỤC NẮM GIỮ</b> — EUA đã vượt 80 €, trung hạn nghiêng tăng nhờ MSR siết cung. Quan sát phản ứng tại kháng cự 82–85 €; cân nhắc chốt một phần nếu tăng nóng không kèm tin cơ bản.</li>
+    <li style="margin-bottom:6px;"><b style="color:#14532D;">➤ Mở lệnh mới:</b> không đuổi giá sau nhịp bứt phá; ưu tiên mua tích lũy khi giá hồi về 77–79 €/tấn trước thềm đề xuất rà soát ETS tháng 7.</li>
+    <li style="margin-bottom:6px;"><b style="color:#14532D;">➤ Quản trị rủi ro:</b> nâng stop-loss kỷ luật lên &lt; 76 € (theo vùng giá mới); giảm vị thế nếu giá phá thủng kèm tín hiệu EC nới lỏng mạnh ETS.</li>
+    <li style="margin-bottom:6px;"><b style="color:#14532D;">➤ Tin chờ làm rõ:</b> (1) đề xuất rà soát toàn diện EU ETS của EC (tháng 7/2026); (2) tiến trình thông qua đề xuất MSR tại Nghị viện/Hội đồng; (3) mốc công bố giá chứng chỉ CBAM ~6/7.</li>
+  </ul>
+
+  <div style="background:#EAF1FB;font-weight:bold;color:#14532D;padding:5px 10px;margin:14px 0 8px;font-size:14px;">Lịch tin cần theo dõi (catalysts)</div>
+  <ul style="margin:0;padding-left:20px;font-size:13.5px;line-height:1.5;">
+    <li style="margin-bottom:5px;"><b style="color:#14532D;">Trong tháng 6:</b> VN vận hành thí điểm sàn carbon trên HNX; đàm phán ERPA 5,15 triệu tín chỉ carbon rừng với Emergent/LEAF. <a href="https://vnexpress.net/san-giao-dich-carbon-du-kien-duoc-thi-diem-trong-thang-6-5082310.html" style="color:#1E7A46;font-style:italic;">(VnExpress)</a></li>
+    <li style="margin-bottom:5px;"><b style="color:#14532D;">~6/7:</b> EU công bố giá tham chiếu chứng chỉ CBAM quý tiếp theo. <a href="https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism_en" style="color:#1E7A46;font-style:italic;">(EC)</a></li>
+    <li style="margin-bottom:5px;"><b style="color:#14532D;">Tháng 7/2026:</b> EC trình đề xuất rà soát toàn diện EU ETS — chất xúc tác lớn nhất. <a href="https://www.esgtoday.com/eu-commission-launches-first-of-planned-ets-reforms-amid-industry-pressure/" style="color:#1E7A46;font-style:italic;">(ESG Today)</a></li>
+  </ul>
+
+  <div style="background:#EAF1FB;font-weight:bold;color:#14532D;padding:5px 10px;margin:14px 0 8px;font-size:14px;">Gợi ý kinh doanh / giải pháp</div>
+  <ul style="margin:0;padding-left:20px;font-size:13.5px;line-height:1.5;">
+    <li style="margin-bottom:5px;"><b style="color:#14532D;">Định giá chi phí CBAM vào báo giá:</b> dùng mốc 75,36 €/tấn CO₂ (Q1/26) để ước tính chi phí carbon cho thép/nhôm xuất EU; lưu ý EUA đã vượt 80 € → chi phí CBAM các quý tới có xu hướng tăng.</li>
+    <li style="margin-bottom:5px;"><b style="color:#14532D;">Năng lực MRV thành lợi thế:</b> đầu tư đo lường–báo cáo–thẩm định phát thải (như VNSTEEL kiểm kê KNK) để giữ đơn hàng EU và giảm chi phí CBAM.</li>
+    <li style="margin-bottom:5px;"><b style="color:#14532D;">Tận dụng sàn carbon nội địa:</b> theo sát phiên thí điểm tháng 6 trên HNX và nguồn tín chỉ carbon rừng (ERPA Emergent ~10 USD/tín chỉ) để chuẩn bị bù trừ/giao dịch.</li>
+  </ul>
+  <div style="border-top:1px solid #ccc;margin-top:12px;padding-top:6px;font-size:11px;color:#777;"><b>Lưu ý:</b> Nhận định dựa trên các nguồn dẫn trong báo cáo, KHÔNG phải khuyến nghị đầu tư. Quyết định giao dịch thuộc về người sử dụng.</div>
+
+  <!-- ===== PHẦN 3 ===== -->
+  <h2 style="font-size:17px;color:#1E7A46;border-bottom:3px solid #1E7A46;padding-bottom:5px;margin:24px 0 12px;">PHẦN 3 — CHI TIẾT CÁC TIN TỨC CHÍNH</h2>
+
+  <div style="background:#E6F2EA;font-weight:bold;color:#14532D;padding:5px 10px;margin:6px 0 8px;font-size:14px;">I. TIN TỨC QUỐC TẾ</div>
+  <p style="font-size:14px;font-weight:bold;color:#14532D;margin:12px 0 4px;">1. Giá EUA vượt mốc 80 €/tấn</p>
+  <p style="font-size:13.5px;line-height:1.55;margin:0 0 10px;text-align:justify;">Theo Trading Economics, EU Carbon Permits tăng lên 80,10 €/tấn trong phiên 3/6/2026, +0,78% so phiên trước; tính trong 1 tháng giá tăng 9,67% và trong 12 tháng tăng 10,32%. Đây là bước bứt khỏi vùng tích lũy 75–80 € duy trì suốt tháng 5. Mức đỉnh lịch sử của EUA là 105,73 € (tháng 2/2023). Mô hình vĩ mô của Trading Economics dự báo giá khoảng 81,25 €/tấn cuối quý này và ~88,10 €/tấn trong 12 tháng tới. <i>(Lưu ý: dữ liệu trang nguồn cập nhật đến 3/6/2026; báo cáo không suy diễn giá cho hôm nay.)</i> <a href="https://tradingeconomics.com/commodity/carbon" style="color:#1E7A46;font-style:italic;">Nguồn: Trading Economics</a></p>
+  <p style="font-size:14px;font-weight:bold;color:#14532D;margin:12px 0 4px;">2. EC khởi động cải tổ Market Stability Reserve (MSR)</p>
+  <p style="font-size:13.5px;line-height:1.55;margin:0 0 10px;text-align:justify;">Ngày 2/4/2026, Uỷ ban châu Âu công bố đề xuất điều chỉnh MSR — cơ chế quản lý nguồn cung hạn ngạch của EU ETS. Theo quy định hiện hành, MSR tự động huỷ (invalidate) lượng hạn ngạch vượt ngưỡng 400 triệu EUA. Đề xuất mới sẽ <b>dừng việc huỷ này</b>, cho phép MSR giữ lại số hạn ngạch đó như một "đệm" chống tăng giá. Đề xuất nằm trong nỗ lực giữ EU ETS "fit for purpose", cần được Nghị viện và Hội đồng châu Âu thông qua. Cao uỷ Khí hậu Wopke Hoekstra gọi đây là "bước đầu quan trọng trong hiện đại hoá thị trường carbon". Đây là phản ứng trước sức ép từ các nước thành viên trong bối cảnh giá năng lượng cao (chiến sự Nga–Ukraine và căng thẳng tại Iran/Trung Đông). <a href="https://www.esgtoday.com/eu-commission-launches-first-of-planned-ets-reforms-amid-industry-pressure/" style="color:#1E7A46;font-style:italic;">Nguồn: ESG Today (2/4/2026)</a></p>
+  <p style="font-size:14px;font-weight:bold;color:#14532D;margin:12px 0 4px;">3. Rà soát toàn diện EU ETS dự kiến tháng 7/2026</p>
+  <p style="font-size:13.5px;line-height:1.55;margin:0 0 10px;text-align:justify;">Sau cuộc họp Euro Summit hồi tháng 3, Chủ tịch EC Ursula von der Leyen cam kết đưa ra các biện pháp ngắn hạn sửa đổi ETS, đồng thời lên kế hoạch rà soát toàn diện hệ thống vào tháng 7/2026. Phạm vi rà soát bao gồm quy tắc phân bổ miễn phí, tích hợp loại bỏ carbon vĩnh viễn (CDR), mở rộng phạm vi (chất thải đô thị, hàng hải), tiêu chí liên kết với các thị trường carbon khác (UK ETS) và đánh giá rủi ro rò rỉ carbon ngoài CBAM. Song song, EC tabling đề xuất sửa MSR: nâng intake rate hướng 36% (thay vì về 12% từ 2031) và hạ ngưỡng trên từ 833 triệu EUA. <a href="https://www.europarl.europa.eu/thinktank/en/document/EPRS_BRI(2026)782615" style="color:#1E7A46;font-style:italic;">Nguồn: European Parliament / ESG Today</a></p>
+
+  <div style="background:#E6F2EA;font-weight:bold;color:#14532D;padding:5px 10px;margin:16px 0 8px;font-size:14px;">II. TIN TỨC VIỆT NAM</div>
+  <p style="font-size:14px;font-weight:bold;color:#14532D;margin:12px 0 4px;">1. Sàn giao dịch carbon vận hành thí điểm trong tháng 6/2026</p>
+  <p style="font-size:13.5px;line-height:1.55;margin:0 0 10px;text-align:justify;">Bộ Nông nghiệp và Môi trường cùng UBCKNN cho biết việc vận hành thí điểm sàn giao dịch carbon trong nước có thể triển khai ngay trong tháng 6/2026. Hệ thống cơ sở dữ liệu phục vụ đăng ký hạn ngạch phát thải và tín chỉ carbon đã cơ bản hoàn thành, đáp ứng yêu cầu an toàn thông tin. Khung pháp lý gồm Nghị định 29/2026/NĐ-CP (19/1/2026) về sàn giao dịch carbon và Quyết định 263/QĐ-TTg (9/2/2026) phê duyệt tổng hạn ngạch phát thải thí điểm 2025–2026. Sàn vận hành thí điểm từ tháng 6 đến hết 2028, chính thức từ 2029, đặt tại nền tảng Sở GDCK Hà Nội (HNX). <a href="https://vnexpress.net/san-giao-dich-carbon-du-kien-duoc-thi-diem-trong-thang-6-5082310.html" style="color:#1E7A46;font-style:italic;">Nguồn: VnExpress / VnEconomy</a></p>
+  <p style="font-size:14px;font-weight:bold;color:#14532D;margin:12px 0 4px;">2. Đàm phán bán 5,15 triệu tín chỉ carbon rừng cho Emergent/LEAF</p>
+  <p style="font-size:13.5px;line-height:1.55;margin:0 0 10px;text-align:justify;">Tại cuộc họp ngày 4/5/2026, Phó Thủ tướng Hồ Quốc Dũng giao Bộ NN&MT tiến hành đàm phán Hợp đồng mua bán giảm phát thải (ERPA) với Tổ chức Tăng cường tài chính lâm nghiệp (Emergent — cơ quan điều hành Liên minh LEAF) ngay trong tháng 6/2026, sau khi Nghị định về dịch vụ hấp thụ và lưu giữ carbon rừng được ban hành. Theo Ý định thư ký tại COP26, Việt Nam dự kiến chuyển nhượng 5,15 triệu tín chỉ carbon rừng vùng Tây Nguyên và Nam Trung Bộ, giá tối thiểu 10 USD/tín chỉ, giai đoạn 2021–2025; toàn bộ lượng tín chỉ được giữ lại tính vào NDC của Việt Nam. <a href="https://vietnamfinance.vn/ddam-phan-ban-5-trieu-tin-chi-carbon-rung-trong-thang-6-2026-d144371.html" style="color:#1E7A46;font-style:italic;">Nguồn: VietnamFinance (5/5/2026)</a></p>
+  <p style="font-size:14px;font-weight:bold;color:#14532D;margin:12px 0 4px;">3. CBAM tạo áp lực và cơ hội; ngành thép chủ động ứng phó</p>
+  <p style="font-size:13.5px;line-height:1.55;margin:0 0 10px;text-align:justify;">CBAM vận hành đầy đủ từ 1/1/2026, chuyển từ báo cáo sang nghĩa vụ tài chính; giá chứng chỉ Q1/2026 ở mức 75,36 €/tấn CO₂. Doanh nghiệp phát thải thấp hoặc nắm tín chỉ carbon hợp lệ sẽ có lợi thế khi tiếp cận thị trường EU. Phó Tổng Giám đốc VNSTEEL cho biết đã triển khai kiểm kê khí nhà kính tại các đơn vị thành viên và đang nghiên cứu phát triển dự án trồng rừng trên quỹ đất hiện có nhằm tạo nguồn tín chỉ carbon. Trong khu vực, Đài Loan vừa bắt đầu thu phí carbon từ các DN phát thải lớn — cho thấy xu hướng định giá carbon đang lan rộng tại châu Á. <a href="https://vneconomy.vn/kiem-ke-khi-nha-kinh-2026-bien-thach-thuc-cbam-thanh-loi-the-cho-doanh-nghiep-xuat-khau.htm" style="color:#1E7A46;font-style:italic;">Nguồn: VnEconomy</a></p>
+
+  <!-- ===== REFERENCES ===== -->
+  <h2 style="font-size:15px;color:#1E7A46;border-bottom:2px solid #1E7A46;padding-bottom:4px;margin:22px 0 8px;">DANH MỤC NGUỒN THAM KHẢO</h2>
+  <ol style="margin:0;padding-left:22px;font-size:12.5px;line-height:1.6;color:#1E7A46;">
+    <li><a href="https://tradingeconomics.com/commodity/carbon" style="color:#1E7A46;">Trading Economics — EU Carbon Permits (giá EUA 80,10 €, dữ liệu 3/6/2026; TTF, than)</a></li>
+    <li><a href="https://carboncredits.com/carbon-prices-today/" style="color:#1E7A46;">CarbonCredits.com — Carbon Prices Today (EU ETS &amp; VCM)</a></li>
+    <li><a href="https://www.esgtoday.com/eu-commission-launches-first-of-planned-ets-reforms-amid-industry-pressure/" style="color:#1E7A46;">ESG Today (2/4/2026) — EC khởi động cải tổ MSR; rà soát ETS tháng 7</a></li>
+    <li><a href="https://www.europarl.europa.eu/thinktank/en/document/EPRS_BRI(2026)782615" style="color:#1E7A46;">European Parliament — Revision of the EU emissions trading system (MSR intake rate)</a></li>
+    <li><a href="https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism_en" style="color:#1E7A46;">EC — Carbon Border Adjustment Mechanism (CBAM)</a></li>
+    <li><a href="https://climate.ec.europa.eu/eu-action/carbon-markets/about-eu-ets_en" style="color:#1E7A46;">European Commission — About the EU ETS</a></li>
+    <li><a href="https://vnexpress.net/san-giao-dich-carbon-du-kien-duoc-thi-diem-trong-thang-6-5082310.html" style="color:#1E7A46;">VnExpress — Sàn giao dịch carbon thí điểm trong tháng 6</a></li>
+    <li><a href="https://vneconomy.vn/chuan-bi-san-sang-cac-dieu-kien-van-hanh-thi-truong-carbon-tai-viet-nam.htm" style="color:#1E7A46;">VnEconomy — Chuẩn bị điều kiện vận hành thị trường carbon (Nghị định 29, Quyết định 263)</a></li>
+    <li><a href="https://vietnamfinance.vn/ddam-phan-ban-5-trieu-tin-chi-carbon-rung-trong-thang-6-2026-d144371.html" style="color:#1E7A46;">VietnamFinance (5/5/2026) — Đàm phán bán 5,15 triệu tín chỉ carbon rừng (Emergent/LEAF)</a></li>
+    <li><a href="https://vneconomy.vn/kiem-ke-khi-nha-kinh-2026-bien-thach-thuc-cbam-thanh-loi-the-cho-doanh-nghiep-xuat-khau.htm" style="color:#1E7A46;">VnEconomy — CBAM 2026 &amp; doanh nghiệp xuất khẩu (VNSTEEL)</a></li>
+    <li><a href="https://vietnamfinance.vn/dai-loan-bat-dau-thu-hang-trieu-usd-phi-carbon-tu-dn-phat-thai-lon-d145573.html" style="color:#1E7A46;">VietnamFinance (31/5/2026) — Đài Loan thu phí carbon từ DN phát thải lớn</a></li>
+  </ol>
+
+  </div>
+  <div style="background:#14532D;color:#C8E6D4;text-align:center;padding:10px;font-size:11px;">STAVIAN INDUSTRIAL METAL — Phòng CLPT, Team KD TCCB  |  Tin tức hàng ngày thị trường Carbon — 12/06/2026</div>
+
+</div>
 </body>
 </html>

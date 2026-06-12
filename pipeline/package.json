@@ -1,0 +1,25 @@
+{
+  "name": "pipeline",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "run-now": "node index.js --run-now",
+    "collect": "node index.js --collect-only",
+    "test-deliver": "node index.js --run-now --no-deliver"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.1067.0",
+    "cheerio": "^1.2.0",
+    "dotenv": "^17.4.2",
+    "node-cron": "^4.2.1",
+    "node-fetch": "^2.7.0",
+    "nodemailer": "^8.0.11",
+    "openai": "^4.104.0",
+    "xml2js": "^0.6.2"
+  }
+}
