@@ -111,6 +111,15 @@ async function runPipeline(options = {}) {
     const savedPath = saveReport(reportData.html, reportData.filename);
     reportData.savedPath = savedPath;
 
+    // ── Cập nhật kho lưu trữ (reports.json) cho trang archive.html ────────────
+    try {
+      const { build } = require('../build-archive-manifest');
+      const m = build(path.resolve(__dirname, '..'));
+      log('pipeline', `✓ Cập nhật reports.json: ${m.count} báo cáo`);
+    } catch (e) {
+      logWarn('pipeline', `Không cập nhật được reports.json: ${e.message}`);
+    }
+
     // ── Bước 5: Gửi ──────────────────────────────────────────────────────────
     let deliveryResult = { email: 'skipped', telegram: 'skipped' };
     if (deliverReport) {
@@ -251,19 +260,4 @@ async function main() {
   }
 }
 
-// Bắt lỗi unhandled
-process.on('unhandledRejection', (reason) => {
-  logError('pipeline', `unhandledRejection: ${reason}`);
-});
-process.on('uncaughtException', (err) => {
-  logError('pipeline', `uncaughtException: ${err.message}`);
-  process.exit(1);
-});
-
-main().catch(err => {
-  logError('pipeline', `Fatal: ${err.message}`);
-  process.exit(1);
-});
-
-// Export cho testing
-module.exports = { runPipeline, runCollectOnly, pipelineState };
+// Bắt lỗi unh

@@ -294,11 +294,11 @@ Bắt đầu báo cáo ngay từ "## PHẦN 1", không cần lời dẫn.
 // ─── Call OpenAI API with retry ──────────────────────────────────────────────
 
 async function callOpenAI(systemPrompt, userPrompt) {
-  const { retries, retryDelay, maxTokens, model, timeout } = config.openai;
+  const { retries, retryDelay, maxTokens, model, timeout, temperature } = config.openai;
 
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      log('analyzer', `Gọi OpenAI API model=${model} (lần ${attempt}/${retries})...`);
+      log('analyzer', `Gọi OpenAI API model=${model} maxTokens=${maxTokens} temp=${temperature} (lần ${attempt}/${retries})...`);
 
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), timeout);
@@ -308,6 +308,7 @@ async function callOpenAI(systemPrompt, userPrompt) {
         response = await getOpenAIClient().chat.completions.create({
           model,
           max_tokens: maxTokens,
+          temperature,
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user',   content: userPrompt },
@@ -768,6 +769,7 @@ function buildHtmlReport(markdown, reportDate, author) {
   <div style="background:#1E7A46;padding:8px 28px;text-align:center;color:#fff;font-weight:bold;font-size:15px;">${viDate}</div>
   <div style="padding:6px 28px 0;text-align:center;font-style:italic;color:#666;font-size:12px;">Người báo cáo: ${author}</div>
   <div style="padding:3px 28px 0;text-align:right;font-size:10px;color:#aaa;font-style:italic;">Tạo tự động lúc ${autoTime}</div>
+  <div style="margin:8px 28px 0;text-align:center;"><a href="archive.html" style="display:inline-block;background:#E6F2EA;color:#14532D;text-decoration:none;font-weight:bold;font-size:12px;padding:6px 14px;border-radius:5px;border:1px solid #bfe0cd;">📚 Xem lại báo cáo các ngày trước →</a></div>
 
   <div style="padding:8px 28px 28px;">
     ${part1Html}
@@ -805,13 +807,4 @@ async function analyzAndBuild(prices, newsItems) {
   const markdown = await callAI(systemPrompt, userPrompt);
   log('analyzer', 'Đang render HTML từ markdown...');
 
-  const html = buildHtmlReport(markdown, reportDate, author);
-
-  const filename = `Tin tức thị trường Carbon ${ddmmyyyy(reportDate)}.html`;
-
-  log('analyzer', `✓ Báo cáo tạo xong: "${filename}" (${html.length} ký tự HTML)`);
-
-  return { html, markdown, date: reportDate, filename, author };
-}
-
-module.exports = { analyzAndBuild };
+  const html = buildHtmlReport(markdown, repor

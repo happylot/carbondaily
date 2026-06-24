@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kho lưu trữ — Tin tức thị trường Carbon</title>
+<style>
+  :root{ --green:#1E7A46; --dark:#14532D; --bg:#eef1f0; --line:#dfe4e2; }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;font-family:Arial,Helvetica,sans-serif;color:#222;background:var(--bg)}
+  a{color:var(--green)}
+  /* Top bar */
+  .top{background:var(--dark);color:#fff;display:flex;align-items:center;gap:12px;padding:10px 16px;flex-wrap:wrap}
+  .top .brand{font-weight:bold;font-size:16px;letter-spacing:.3px}
+  .top .brand small{display:block;font-weight:normal;font-size:10px;color:#C8E6D4;letter-spacing:1.5px}
+  .top .spacer{flex:1}
+  .top a.btn{background:var(--green);color:#fff;text-decoration:none;padding:7px 12px;border-radius:5px;font-size:13px;font-weight:bold;white-space:nowrap}
+  .top input{padding:7px 10px;border:none;border-radius:5px;font-size:13px;min-width:150px}
+  /* Layout */
+  .wrap{display:flex;height:calc(100% - 52px)}
+  .side{width:280px;min-width:240px;background:#fff;border-right:1px solid var(--line);overflow:auto}
+  .side .moH{position:sticky;top:0;background:#f3f6f5;color:var(--dark);font-weight:bold;font-size:12px;padding:7px 14px;border-bottom:1px solid var(--line);text-transform:uppercase;letter-spacing:.5px}
+  .side .it{display:block;padding:10px 14px;border-bottom:1px solid #f0f2f1;text-decoration:none;color:#222;cursor:pointer}
+  .side .it:hover{background:#f5faf7}
+  .side .it.active{background:var(--green);color:#fff}
+  .side .it.active .d2{color:#dff0e6}
+  .side .it .d1{font-weight:bold;font-size:14px}
+  .side .it .d2{font-size:11px;color:#888}
+  .main{flex:1;position:relative;background:#fff}
+  .main iframe{width:100%;height:100%;border:0;display:block}
+  .empty{padding:40px;text-align:center;color:#888}
+  /* Mobile */
+  .mtoggle{display:none}
+  @media (max-width:760px){
+    .wrap{flex-direction:column;height:auto}
+    .side{width:100%;max-height:42vh;border-right:0;border-bottom:1px solid var(--line);display:none}
+    .side.open{display:block}
+    .main{height:58vh}
+    .mtoggle{display:inline-block;background:var(--green);color:#fff;border:0;padding:7px 12px;border-radius:5px;font-size:13px;font-weight:bold}
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">TIN TỨC THỊ TRƯỜNG CARBON<small>KHO LƯU TRỮ BÁO CÁO · STAVIAN CLPT</small></div>
+    <button class="mtoggle" onclick="document.getElementById('side').classList.toggle('open')">☰ Chọn ngày</button>
+    <div class="spacer"></div>
+    <input id="q" type="search" placeholder="Tìm theo ngày (vd 19/06)…" oninput="render()">
+    <a class="btn" href="index.html">📄 Báo cáo mới nhất</a>
+  </div>
+  <div class="wrap">
+    <nav class="side" id="side"></nav>
+    <div class="main">
+      <iframe id="view" title="Báo cáo"></iframe>
+      <div id="empty" class="empty" style="display:none">Không tải được danh sách báo cáo (reports.json).</div>
+    </div>
+  </div>
+
+<script>
+let DATA = [];
+const sideEl = document.getElementById('side');
+const viewEl = document.getElementById('view');
+
+function fmtMonth(iso){ const [y,m]=iso.split('-'); return `Tháng ${m}/${y}`; }
+
+function load(iso, push){
+  const r = DATA.find(x=>x.iso===iso); if(!r) return;
+  viewEl.src = encodeURI(r.file);
+  if(push!==false && location.hash.slice(1)!==iso) location.hash = iso;
+  document.querySelectorAll('.side .it').forEach(e=>e.classList.toggle('active', e.dataset.iso===iso));
+  if(window.innerWidth<=760) sideEl.classList.remove('open');
+}
+
+function render(){
+  const q = (document.getElementById('q').value||'').trim().toLowerCase();
+  const list = DATA.filter(r => !q || r.date.toLowerCase().includes(q) || r.weekday.toLowerCase().includes(q) || r.iso.includes(q));
+  let html='', curMonth='';
+  for(const r of list){
+    const mo = fmtMonth(r.iso);
+    if(mo!==curMonth){ html += `<div class="moH">${mo}</div>`; curMonth=mo; }
+    html += `<a class="it" data-iso="${r.iso}" onclick="load('${r.iso}')"><div class="d1">${r.date}</div><div class="d2">${r.weekday}</div></a>`;
+  }
+  sideEl.innerHTML = html || '<div class="empty">Không có báo cáo khớp.</div>';
+  const cur = location.hash.slice(1);
+  const active = list.find(r=>r.iso===cur) ? cur : (list[0] && list[0].iso);
+  document.querySelectorAll('.side .it').forEach(e=>e.classList.toggle('active', e.dataset.iso===active));
+}
+
+fetch('reports.json?_=' + Date.now())
+  .then(r=>r.json())
+  .then(j=>{
+    DATA = j.reports||[];
+    if(!DATA.length){ document.getElementById('empty').style.display='block'; return; }
+    render();
+    const cur = location.hash.slice(1);
+    load(DATA.find(r=>r.iso===cur) ? cur : DATA[0].iso, false);
+  })
+  .catch(()=>{ document.getElementById('empty').style.display='block'; });
+
+window.addEventListener('hashchange', ()=>{ const h=location.hash.slice(1); if(h) load(h, false); });
+</script>
+</body>
+</html>
