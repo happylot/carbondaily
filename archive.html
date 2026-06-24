@@ -2,73 +2,98 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Kho lưu trữ — Tin tức thị trường Carbon</title>
 <style>
   :root{ --green:#1E7A46; --dark:#14532D; --bg:#eef1f0; --line:#dfe4e2; }
   *{box-sizing:border-box}
-  html,body{margin:0;height:100%;font-family:Arial,Helvetica,sans-serif;color:#222;background:var(--bg)}
+  html,body{margin:0;height:100%}
+  body{height:100vh;height:100dvh;display:flex;flex-direction:column;font-family:Arial,Helvetica,sans-serif;color:#222;background:var(--bg);overflow:hidden}
   a{color:var(--green)}
   /* Top bar */
-  .top{background:var(--dark);color:#fff;display:flex;align-items:center;gap:12px;padding:10px 16px;flex-wrap:wrap}
-  .top .brand{font-weight:bold;font-size:16px;letter-spacing:.3px}
-  .top .brand small{display:block;font-weight:normal;font-size:10px;color:#C8E6D4;letter-spacing:1.5px}
+  .top{flex:0 0 auto;background:var(--dark);color:#fff;display:flex;align-items:center;gap:10px;padding:8px 14px;flex-wrap:wrap}
+  .top .brand{font-weight:bold;font-size:15px;letter-spacing:.3px}
+  .top .brand small{display:block;font-weight:normal;font-size:10px;color:#C8E6D4;letter-spacing:1.3px}
   .top .spacer{flex:1}
-  .top a.btn{background:var(--green);color:#fff;text-decoration:none;padding:7px 12px;border-radius:5px;font-size:13px;font-weight:bold;white-space:nowrap}
-  .top input{padding:7px 10px;border:none;border-radius:5px;font-size:13px;min-width:150px}
+  .top a.btn,.top button.tbtn{background:var(--green);color:#fff;text-decoration:none;border:0;padding:7px 12px;border-radius:5px;font-size:13px;font-weight:bold;white-space:nowrap;cursor:pointer}
+  .top input{padding:7px 10px;border:none;border-radius:5px;font-size:13px;min-width:130px;flex:0 1 200px}
   /* Layout */
-  .wrap{display:flex;height:calc(100% - 52px)}
+  .wrap{flex:1 1 auto;min-height:0;display:flex;position:relative}
   .side{width:280px;min-width:240px;background:#fff;border-right:1px solid var(--line);overflow:auto}
   .side .moH{position:sticky;top:0;background:#f3f6f5;color:var(--dark);font-weight:bold;font-size:12px;padding:7px 14px;border-bottom:1px solid var(--line);text-transform:uppercase;letter-spacing:.5px}
-  .side .it{display:block;padding:10px 14px;border-bottom:1px solid #f0f2f1;text-decoration:none;color:#222;cursor:pointer}
+  .side .it{display:block;padding:11px 14px;border-bottom:1px solid #f0f2f1;text-decoration:none;color:#222;cursor:pointer}
   .side .it:hover{background:#f5faf7}
   .side .it.active{background:var(--green);color:#fff}
   .side .it.active .d2{color:#dff0e6}
   .side .it .d1{font-weight:bold;font-size:14px}
   .side .it .d2{font-size:11px;color:#888}
-  .main{flex:1;position:relative;background:#fff}
-  .main iframe{width:100%;height:100%;border:0;display:block}
+  .main{flex:1 1 auto;min-width:0;position:relative;background:#fff}
+  .main iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block}
   .empty{padding:40px;text-align:center;color:#888}
+  .backdrop{display:none}
+  .mtoggle,.fsbtn{display:none}
   /* Mobile */
-  .mtoggle{display:none}
   @media (max-width:760px){
-    .wrap{flex-direction:column;height:auto}
-    .side{width:100%;max-height:42vh;border-right:0;border-bottom:1px solid var(--line);display:none}
-    .side.open{display:block}
-    .main{height:58vh}
-    .mtoggle{display:inline-block;background:var(--green);color:#fff;border:0;padding:7px 12px;border-radius:5px;font-size:13px;font-weight:bold}
+    .top .brand small{display:none}
+    .mtoggle{display:inline-block}
+    /* Danh sách ngày = ngăn kéo trượt (overlay) → khung báo cáo full màn hình */
+    .side{position:absolute;z-index:30;top:0;left:0;bottom:0;width:84%;max-width:330px;
+          transform:translateX(-100%);transition:transform .22s ease;box-shadow:2px 0 14px rgba(0,0,0,.28)}
+    .side.open{transform:translateX(0)}
+    .backdrop{position:absolute;inset:0;background:rgba(0,0,0,.4);z-index:20}
+    .backdrop.show{display:block}
+    /* Nút toàn màn hình */
+    .fsbtn{display:flex;align-items:center;justify-content:center;position:fixed;right:12px;bottom:12px;z-index:25;
+           width:46px;height:46px;border-radius:50%;border:0;background:var(--green);color:#fff;font-size:20px;
+           box-shadow:0 2px 8px rgba(0,0,0,.3);cursor:pointer}
+    body.fs .top{display:none}            /* ẩn thanh trên → báo cáo chiếm trọn màn hình */
   }
 </style>
 </head>
 <body>
   <div class="top">
+    <button class="tbtn mtoggle" onclick="openSide(true)">☰ Chọn ngày</button>
     <div class="brand">TIN TỨC THỊ TRƯỜNG CARBON<small>KHO LƯU TRỮ BÁO CÁO · STAVIAN CLPT</small></div>
-    <button class="mtoggle" onclick="document.getElementById('side').classList.toggle('open')">☰ Chọn ngày</button>
     <div class="spacer"></div>
     <input id="q" type="search" placeholder="Tìm theo ngày (vd 19/06)…" oninput="render()">
-    <a class="btn" href="index.html">📄 Báo cáo mới nhất</a>
+    <a class="btn" href="index.html">📄 Mới nhất</a>
   </div>
   <div class="wrap">
     <nav class="side" id="side"></nav>
+    <div class="backdrop" id="backdrop" onclick="openSide(false)"></div>
     <div class="main">
       <iframe id="view" title="Báo cáo"></iframe>
       <div id="empty" class="empty" style="display:none">Không tải được danh sách báo cáo (reports.json).</div>
     </div>
   </div>
+  <button class="fsbtn" id="fsbtn" title="Toàn màn hình" onclick="toggleFs()">⛶</button>
 
 <script>
 let DATA = [];
 const sideEl = document.getElementById('side');
+const backdrop = document.getElementById('backdrop');
 const viewEl = document.getElementById('view');
+const fsbtn = document.getElementById('fsbtn');
+const isMobile = () => window.matchMedia('(max-width:760px)').matches;
 
-function fmtMonth(iso){ const [y,m]=iso.split('-'); return `Tháng ${m}/${y}`; }
+function openSide(o){
+  sideEl.classList.toggle('open', o);
+  backdrop.classList.toggle('show', o);
+}
+function toggleFs(){
+  const on = document.body.classList.toggle('fs');
+  fsbtn.textContent = on ? '✕' : '⛶';
+  fsbtn.title = on ? 'Thoát toàn màn hình' : 'Toàn màn hình';
+}
+
+function fmtMonth(iso){ const p=iso.split('-'); return `Tháng ${p[1]}/${p[0]}`; }
 
 function load(iso, push){
   const r = DATA.find(x=>x.iso===iso); if(!r) return;
   viewEl.src = encodeURI(r.file);
   if(push!==false && location.hash.slice(1)!==iso) location.hash = iso;
   document.querySelectorAll('.side .it').forEach(e=>e.classList.toggle('active', e.dataset.iso===iso));
-  if(window.innerWidth<=760) sideEl.classList.remove('open');
+  if(isMobile()) openSide(false);   // chọn xong → đóng ngăn kéo, báo cáo full màn hình
 }
 
 function render(){
