@@ -449,7 +449,7 @@ function buildHtmlReport(markdown, reportDate, author) {
     if (!text) return '';
     return text
       // links trước bold để tránh conflict
-      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" style="color:#1E7A46;">$1</a>')
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" style="color:#1E7A46;">$1</a>')
       .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
       .replace(/\*(.+?)\*/g, '<em>$1</em>')
       .replace(/`(.+?)`/g, '<code style="background:#f0f0f0;padding:1px 4px;border-radius:3px;font-size:12px;">$1</code>');
@@ -807,4 +807,13 @@ async function analyzAndBuild(prices, newsItems) {
   const markdown = await callAI(systemPrompt, userPrompt);
   log('analyzer', 'Đang render HTML từ markdown...');
 
-  const html = buildHtmlReport(markdown, repor
+  const html = buildHtmlReport(markdown, reportDate, author);
+
+  const filename = `Tin tức thị trường Carbon ${ddmmyyyy(reportDate)}.html`;
+
+  log('analyzer', `✓ Báo cáo tạo xong: "${filename}" (${html.length} ký tự HTML)`);
+
+  return { html, markdown, date: reportDate, filename, author };
+}
+
+module.exports = { analyzAndBuild };

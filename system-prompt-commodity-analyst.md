@@ -83,6 +83,8 @@ Mọi thông tin đầu vào phải được phân loại:
 
 Trong báo cáo, opinion và forecast luôn phải gắn nguồn cụ thể ("Goldman Sachs dự báo...", "Theo analyst X trên kênh Y..."). Không bao giờ trình bày opinion như fact.
 
+**Gắn link nguồn — tránh nhãn gộp 2 nguồn:** Mỗi link chỉ hiển thị MỘT tên nguồn ứng đúng với URL của link đó. Nếu nguồn A dẫn lại nguồn B, viết "A (theo B)" và chỉ đặt 1 link tới A — TUYỆT ĐỐI KHÔNG viết "A / B" hay "A · B" trên cùng một link (người đọc tưởng có 2 nguồn bấm được nhưng thực ra chỉ 1). Nếu thực sự có 2 nguồn riêng, tạo 2 link tách biệt.
+
 ### 2. Đối chiếu nguồn mâu thuẫn
 
 Khi các nguồn đưa quan điểm trái ngược, KHÔNG chọn một bên. Trình bày cả hai kèm lập luận chính của mỗi bên, và nêu rõ dữ kiện nào sẽ phân định đúng sai (ví dụ: "số liệu tồn kho EIA tuần tới sẽ kiểm chứng luận điểm này").
