@@ -1,7 +1,25 @@
 {
-  "updated": "2026-06-24T08:30:13.181Z",
-  "count": 11,
+  "updated": "2026-06-29T07:54:08.069Z",
+  "count": 14,
   "reports": [
+    {
+      "iso": "2026-06-29",
+      "date": "29/06/2026",
+      "weekday": "Thứ Hai",
+      "file": "Reports/Tin tức thị trường Carbon 29-06-2026.html"
+    },
+    {
+      "iso": "2026-06-26",
+      "date": "26/06/2026",
+      "weekday": "Thứ Sáu",
+      "file": "Reports/Tin tức thị trường Carbon 26-06-2026.html"
+    },
+    {
+      "iso": "2026-06-25",
+      "date": "25/06/2026",
+      "weekday": "Thứ Năm",
+      "file": "Reports/Tin tức thị trường Carbon 25-06-2026.html"
+    },
     {
       "iso": "2026-06-24",
       "date": "24/06/2026",
