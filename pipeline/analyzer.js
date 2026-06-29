@@ -769,7 +769,7 @@ function buildHtmlReport(markdown, reportDate, author) {
   <div style="background:#1E7A46;padding:8px 28px;text-align:center;color:#fff;font-weight:bold;font-size:15px;">${viDate}</div>
   <div style="padding:6px 28px 0;text-align:center;font-style:italic;color:#666;font-size:12px;">Người báo cáo: ${author}</div>
   <div style="padding:3px 28px 0;text-align:right;font-size:10px;color:#aaa;font-style:italic;">Tạo tự động lúc ${autoTime}</div>
-  <div style="margin:8px 28px 0;text-align:center;"><a href="archive.html" style="display:inline-block;background:#E6F2EA;color:#14532D;text-decoration:none;font-weight:bold;font-size:12px;padding:6px 14px;border-radius:5px;border:1px solid #bfe0cd;">📚 Xem lại báo cáo các ngày trước →</a></div>
+  <div style="margin:8px 28px 0;text-align:center;"><a href="/carbondaily/archive.html" style="display:inline-block;background:#E6F2EA;color:#14532D;text-decoration:none;font-weight:bold;font-size:12px;padding:6px 14px;border-radius:5px;border:1px solid #bfe0cd;">📚 Xem lại báo cáo các ngày trước →</a></div>
 
   <div style="padding:8px 28px 28px;">
     ${part1Html}
