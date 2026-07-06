@@ -1,7 +1,13 @@
 {
-  "updated": "2026-07-03T01:50:15.007Z",
-  "count": 18,
+  "updated": "2026-07-06T02:13:54.892Z",
+  "count": 19,
   "reports": [
+    {
+      "iso": "2026-07-06",
+      "date": "06/07/2026",
+      "weekday": "Thứ Hai",
+      "file": "Reports/Tin tức thị trường Carbon 06-07-2026.html"
+    },
     {
       "iso": "2026-07-03",
       "date": "03/07/2026",
