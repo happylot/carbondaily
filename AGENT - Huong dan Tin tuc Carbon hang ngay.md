@@ -21,6 +21,15 @@ Tài liệu này mô tả nhiệm vụ của Agent tạo báo cáo "Tin tức h�
 - Tin dịch lại phải kiểm tra & dịch từ nguồn gốc, tránh sai lệch thông điệp.
 - Phần 2 ghi rõ: nhận định không phải khuyến nghị đầu tư.
 
+## 2b. QUY TẮC NGUỒN — KIỂM CHỨNG ĐƯỢC TỪ VIỆT NAM (bắt buộc, bổ sung 17/7/2026)
+Bài học 17/7/2026: người đọc không mở được link Argus/Carbon Pulse (paywall), whtc.com (403 chặn IP ngoài Mỹ), và bị dẫn bài cũ 12/5 cạnh sự kiện 17/7 → mất lòng tin. Từ nay:
+1. **Mọi link trong báo cáo phải MỞ ĐƯỢC TỪ VN**: trước khi đưa link vào, web_fetch phải trả về NỘI DUNG ĐẦY ĐỦ (không phải trang đăng nhập/paywall/403). Link nào không mở được → tìm nguồn thay thế mở tự do; nếu buộc phải dùng thông tin từ nguồn đóng, ghi rõ "(nguồn thu phí — không kiểm chứng công khai được)" và KHÔNG đặt làm nguồn chính.
+2. **DANH SÁCH CẤM dẫn link** (đã kiểm chứng lỗi): carbon-pulse.com, argusmedia.com (paywall); whtc.com, kfgo.com, wkzo.com, wtvbam.com và các đài radio Mỹ đăng lại Reuters (chặn IP ngoài Mỹ); yahoo.com (consent wall). Reuters.com gốc thường cũng chặn — chỉ dùng nếu fetch xác nhận mở được.
+3. **Nguồn mở đã kiểm chứng tốt**: carbonherald.com, eunews.it, gmk.center, esgtoday.com, enerdata.net, tradingeconomics.com, sundayguardianlive.com, ec.europa.eu (presscorner), europarl.europa.eu, consilium.europa.eu, các báo VN (VnExpress, VnEconomy, Dân trí, Vietstock...).
+4. **Ghi NGÀY ĐĂNG THẬT của từng bài ngay trong nhãn link**. Bài cũ (>7 ngày) chỉ dùng làm bối cảnh và phải ghi rõ "bối cảnh <ngày/tháng>, KHÔNG phải tin hôm nay". TUYỆT ĐỐI không đặt bài cũ đứng tên cho sự kiện mới.
+5. **Tin "sắp công bố" (pre-release)**: nếu báo cáo chạy TRƯỚC giờ công bố chính thức (vd EC công bố buổi chiều giờ EU = tối giờ VN), phải dán nhãn NỔI BẬT ngay tiêu đề tin: "KỲ VỌNG TRƯỚC CÔNG BỐ — nội dung có thể thay đổi", tách bạch với nội dung đã công bố chính thức.
+6. **Xác minh lại hôm sau (bắt buộc)**: báo cáo ngày kế tiếp sau một sự kiện chính sách lớn PHẢI đối chiếu văn bản chính thức (EC presscorner ec.europa.eu/commission/presscorner) với các số liệu pre-release đã đăng, và ĐÍNH CHÍNH công khai trong mục riêng nếu có sai lệch. Riêng báo cáo 18/7/2026: phải đối chiếu văn bản chính thức EC về rà soát EU ETS (công bố 17/7) với các số Reuters đã dùng (siết cap 3,7%/năm từ 2031; free allocation tới 2037; điều kiện 80/20; 50% doanh thu; hàng không ≤5.000 km; €6 tỷ) và đính chính nếu lệch.
+
 ## 3. Nguồn tham khảo gợi ý
 - Quốc tế: Carbon Pulse, Trading Economics (EU Carbon Permits), EEX, ICE, European Commission (climate.ec.europa.eu), Fastmarkets, Carbon Direct, ICAP, Reuters, Energy Aspects, Carbon Credits.com, ESG Today.
 - Việt Nam: VnExpress, VnEconomy, Người Quan Sát, Vietnam+, Báo Chính phủ, VCCI/Trung tâm WTO, Tạp chí Công Thương.
