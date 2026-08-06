@@ -244,10 +244,14 @@ async function main() {
     log('pipeline', '=== CHẾ ĐỘ: CHẠY NGAY ===');
     const deliver = !args.includes('--no-deliver');
     await runPipeline({ deliverReport: deliver });
+    // Thoát sạch: runPipeline giữ event loop sống 60s (timer reset trạng thái),
+    // với chế độ chạy-một-lần ta không cần chờ nên thoát ngay.
+    process.exit(0);
 
   } else if (args.includes('--collect-only')) {
     // Chỉ thu thập, in kết quả ra console
     await runCollectOnly();
+    process.exit(0);
 
   } else {
     // Chế độ mặc định: scheduler
@@ -260,4 +264,33 @@ async function main() {
   }
 }
 
-// Bắt lỗi unh
+// Bắt lỗi unhandled toàn cục để pipeline không "chết ngầm"
+process.on('unhandledRejection', (reason) => {
+  const msg = reason instanceof Error ? reason.message : String(reason);
+  logError('pipeline', `Unhandled Rejection: ${msg}`);
+});
+
+process.on('uncaughtException', (err) => {
+  logError('pipeline', `Uncaught Exception: ${err.message}`);
+  process.exit(1);
+});
+
+// Cho phép dừng scheduler bằng Ctrl+C một cách sạch sẽ
+process.on('SIGINT', () => {
+  log('pipeline', 'Nhận SIGINT — đang dừng pipeline...');
+  process.exit(0);
+});
+
+// ─── Khởi động ────────────────────────────────────────────────────────────────
+main().catch((err) => {
+  logError('pipeline', `Lỗi khởi động pipeline: ${err.message}`);
+  process.exit(1);
+});
+
+// Export cho việc test / tích hợp web dashboard sau này
+module.exports = {
+  runPipeline,
+  runCollectOnly,
+  startScheduler,
+  getPipelineState: () => pipelineState,
+};

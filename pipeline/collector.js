@@ -69,12 +69,31 @@ function truncateWords(text, maxWords = 150) {
   return words.slice(0, maxWords).join(' ') + '…';
 }
 
+/**
+ * So khớp từ khóa theo RANH GIỚI TỪ (Unicode), tránh lỗi khớp chuỗi con:
+ * ví dụ 'ban' KHÔNG khớp "Vietcombank", 'war' KHÔNG khớp "warning".
+ * Hỗ trợ cả cụm nhiều từ ('rate cut', 'giá đồng').
+ * Cache regex đã biên dịch để không tạo lại mỗi lần gọi.
+ */
+const _kwRegexCache = new Map();
+function keywordMatches(text, keyword) {
+  const kw = keyword.toLowerCase();
+  let re = _kwRegexCache.get(kw);
+  if (!re) {
+    const esc = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // Không có chữ cái/chữ số Unicode liền ngay trước và sau từ khóa
+    re = new RegExp(`(?<![\\p{L}\\p{N}])${esc}(?![\\p{L}\\p{N}])`, 'u');
+    _kwRegexCache.set(kw, re);
+  }
+  return re.test(text);
+}
+
 /** Phân loại nhóm hàng hóa dựa trên tiêu đề + tóm tắt */
 function classifyCommodity(title = '', summary = '') {
   const text = (title + ' ' + summary).toLowerCase();
   const { groupKeywords } = config.news;
   for (const [group, keywords] of Object.entries(groupKeywords)) {
-    if (keywords.some(kw => text.includes(kw))) return group;
+    if (keywords.some(kw => keywordMatches(text, kw))) return group;
   }
   return 'other';
 }
@@ -82,7 +101,7 @@ function classifyCommodity(title = '', summary = '') {
 /** Kiểm tra có phải breaking news không */
 function isBreakingNews(title = '', summary = '') {
   const text = (title + ' ' + summary).toLowerCase();
-  return config.news.breakingKeywords.some(kw => text.includes(kw.toLowerCase()));
+  return config.news.breakingKeywords.some(kw => keywordMatches(text, kw));
 }
 
 /** Kiểm tra bài viết có trong 24h không */
@@ -260,9 +279,51 @@ async function collectPrices() {
     })
   );
 
+  // ── Xử lý riêng EUA ──────────────────────────────────────────────────────────
+  // Giá tuyệt đối từ proxy KRBN (~34 USD) KHÔNG phải giá EUA thật (~75 €/tCO2).
+  // Ưu tiên giá nhập tay (ICE); nếu không có thì chỉ giữ HƯỚNG (Δ%) và ẩn giá sai lệch.
+  applyEuaHandling(results.EUA);
+
   const succeeded = Object.values(results).filter(r => r.status !== 'error').length;
   log('collector', `Thu thập giá hoàn tất: ${succeeded}/${config.prices.contracts.length} hợp đồng thành công`);
   return results;
+}
+
+/**
+ * Điều chỉnh entry EUA theo giá nhập tay hoặc đánh dấu proxy rõ ràng.
+ * @param {Object|undefined} eua - entry EUA trong results (mutate tại chỗ)
+ */
+function applyEuaHandling(eua) {
+  if (!eua) return;
+  const override = config.prices.euaOverride || {};
+
+  if (override.price != null && !isNaN(override.price)) {
+    // Giá ICE thật do analyst nhập tay
+    const prev = (override.prevClose != null && !isNaN(override.prevClose))
+      ? override.prevClose
+      : eua.prevClose;
+    eua.price      = override.price;
+    eua.prevClose  = prev ?? null;
+    eua.changeAbs  = prev != null ? +(override.price - prev).toFixed(4) : null;
+    eua.changePct  = (prev != null && prev !== 0) ? +((override.price - prev) / prev * 100).toFixed(2) : null;
+    eua.source     = 'Nhập tay (ICE)';
+    eua.status     = 'ok';
+    eua.priceNote  = 'Giá EUA nhập tay từ ICE.';
+    delete eua.error;
+    log('collector', `[EUA] ✓ Dùng giá nhập tay: ${eua.price} €/tCO2 (Δ ${eua.changePct ?? '?'}%)`);
+    return;
+  }
+
+  if (eua.status === 'error') return; // đã N/A sẵn, giữ nguyên
+
+  // Chỉ có proxy KRBN → giữ hướng biến động, ẩn giá tuyệt đối sai lệch
+  const dir = eua.changePct;
+  eua.priceProxy = eua.price;   // lưu lại giá proxy để tham khảo/debug
+  eua.price      = null;
+  eua.changeAbs  = null;
+  eua.status     = 'fallback';
+  eua.priceNote  = `Chưa có giá ICE. Proxy KRBN chỉ phản ánh XU HƯỚNG (Δ ${dir != null ? (dir > 0 ? '+' : '') + dir + '%' : '?'}); nhập giá thật qua EUA_PRICE_OVERRIDE.`;
+  log('collector', `[EUA] ⚠ Chỉ có proxy KRBN — ẩn giá tuyệt đối, giữ hướng Δ ${dir ?? '?'}%`);
 }
 
 // ─── RSS Parser ───────────────────────────────────────────────────────────────

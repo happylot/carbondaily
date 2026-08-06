@@ -67,7 +67,9 @@ npm run collect
 | EUA (carbon) | KRBN ETF proxy | ⚠ Proxy, cần nhập thủ công giá ICE thực |
 | Iron Ore | BHP stock proxy | ⚠ Proxy, cần API SGX cho giá chính xác |
 
-> **Lưu ý về EUA**: Yahoo Finance không cung cấp EUA ICE futures trực tiếp. Pipeline dùng KRBN ETF (carbon ETF, EUA ~75% trọng số) làm proxy. Để có giá EUA chính xác, cần đăng ký ICE Data Services, Refinitiv hoặc Bloomberg.
+> **Lưu ý về EUA**: Yahoo Finance không cung cấp EUA ICE futures trực tiếp. Pipeline dùng KRBN ETF (carbon ETF, EUA ~75% trọng số) làm proxy — nhưng **giá tuyệt đối của proxy (~34 USD) KHÔNG phải giá EUA thật (~75 €/tCO₂)**. Vì vậy khi không có giá nhập tay, pipeline **ẩn giá tuyệt đối EUA (hiển thị N/A)** và chỉ giữ **hướng biến động (Δ%)** để tránh in số sai.
+>
+> **Nhập giá EUA thật (khuyến nghị mỗi sáng)**: đặt `EUA_PRICE_OVERRIDE=76.55` (và tuỳ chọn `EUA_PREVCLOSE_OVERRIDE=76.96` để tính Δ ngày) trong `.env`. Giá lấy từ ICE/Trading Economics/Refinitiv/Bloomberg.
 
 ### Tin tức (RSS)
 - **Quốc tế**: Carbon Pulse, Reuters, EIA, ESG Today, CarbonCredits.com

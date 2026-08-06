@@ -16,6 +16,8 @@ const config = {
   openai: {
     apiKey: process.env.OPENAI_API_KEY || '',
     model: process.env.OPENAI_MODEL || 'gpt-4o',
+    // Nhiệt độ thấp cho báo cáo phân tích (ưu tiên chính xác, ít "sáng tác")
+    temperature: parseFloat(process.env.OPENAI_TEMPERATURE || '0.4'),
     maxTokens: 8192,
     retries: 3,
     retryDelay: 15_000, // ms
@@ -67,6 +69,13 @@ const config = {
   // ── Thu thập giá ─────────────────────────────────────────────────────────────
   prices: {
     alertThreshold: parseFloat(process.env.PRICE_ALERT_THRESHOLD || '3'), // %
+    // Nhập tay giá EUA thật (ICE) — proxy KRBN chỉ phản ánh xu hướng, không phải
+    // giá tuyệt đối. Analyst đặt EUA_PRICE_OVERRIDE mỗi sáng để báo cáo hiển thị
+    // đúng giá ICE. EUA_PREVCLOSE_OVERRIDE (tuỳ chọn) để tính Δ ngày chính xác.
+    euaOverride: {
+      price:     process.env.EUA_PRICE_OVERRIDE     ? parseFloat(process.env.EUA_PRICE_OVERRIDE)     : null,
+      prevClose: process.env.EUA_PREVCLOSE_OVERRIDE ? parseFloat(process.env.EUA_PREVCLOSE_OVERRIDE) : null,
+    },
     contracts: [
       // Mỗi contract: { id, name, group, sources: [{url, parser}] }
       {
@@ -194,7 +203,8 @@ const config = {
     groupKeywords: {
       energy: ['oil', 'crude', 'brent', 'wti', 'gas', 'lng', 'ttf', 'opec', 'refinery', 'dầu', 'khí', 'năng lượng', 'petroleum', 'eia', 'rig count'],
       carbon: ['carbon', 'eua', 'ets', 'cbam', 'emission', 'co2', 'climate', 'tín chỉ', 'phát thải', 'carbon credit', 'vcm', 'msr', 'allowance', 'net zero'],
-      metals: ['gold', 'silver', 'copper', 'aluminum', 'aluminium', 'iron ore', 'steel', 'lme', 'comex', 'vàng', 'bạc', 'đồng', 'nhôm', 'quặng sắt', 'thép', 'zinc', 'nickel'],
+      // 'đồng' đơn lẻ trùng đơn vị tiền VND → dùng cụm 'giá đồng'/'copper' để tránh nhầm
+      metals: ['gold', 'silver', 'copper', 'aluminum', 'aluminium', 'iron ore', 'steel', 'lme', 'comex', 'vàng', 'bạc', 'giá đồng', 'nhôm', 'quặng sắt', 'thép', 'zinc', 'nickel'],
       policy: ['fed', 'rate', 'opec', 'sanction', 'tariff', 'regulation', 'policy', 'parliament', 'congress', 'decree', 'nghị định', 'quy định', 'chính sách', 'lãi suất'],
     },
     // Từ khóa Breaking News
@@ -208,8 +218,8 @@ const config = {
       // Metals
       'lme default', 'china stimulus', 'fed rate', 'rate cut', 'rate hike',
       'bank of japan', 'gold record', 'copper shortage',
-      // General
-      'emergency', 'war', 'conflict', 'shock', 'crisis', 'crash', 'ban',
+      // General ('ban' bị loại: trùng "Vietcombank" và từ tiếng Việt "ban hành/trưởng ban")
+      'emergency', 'war', 'conflict', 'shock', 'crisis', 'crash',
     ],
   },
 

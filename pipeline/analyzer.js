@@ -816,4 +816,4 @@ async function analyzAndBuild(prices, newsItems) {
   return { html, markdown, date: reportDate, filename, author };
 }
 
-module.exports = { analyzAndBuild };
+module.exports = { analyzAndBuild, buildHtmlReport };
