@@ -438,410 +438,496 @@ async function callAI(systemPrompt, userPrompt) {
 // AI trả về markdown 3 phần. Hàm này parse và render thành HTML có visual
 // giống file mẫu: banner tín hiệu màu, bảng 2 cột động lực, section headers xanh.
 
+/**
+ * buildHtmlReport — render markdown → HTML theo ĐÚNG mẫu báo cáo ngày 31/07/2026.
+ *
+ * Mẫu 31/07 vốn là HTML viết tay; hàm này tái tạo lại toàn bộ markup của nó:
+ *   - Header xanh #1D6059 kèm logo Stavian
+ *   - Khối ĐIỂM NHẤN nền đỏ sẫm #7A1E1E, chữ trắng, link gạch chân trắng
+ *   - Bảng giá 3 cột: Sản phẩm | Giá | Thay đổi / Ghi chú
+ *   - Hộp "Nguồn giá" nền xanh nhạt #EAF1FB, hộp "Lưu ý dữ liệu" nền hổ phách #FCF3E2
+ *   - Phần 2: banner tín hiệu, bảng tín hiệu nhanh 2 cột nhãn/giá trị,
+ *     bảng Động lực TĂNG & GIẢM 2 cột, bảng Kịch bản → Hành động 3 cột,
+ *     hộp Chiến thuật ➤, danh sách Catalysts, Gợi ý, hộp cảnh báo đỏ cuối phần
+ *   - Phần 3: tin chi tiết đánh số + DANH MỤC NGUỒN THAM KHẢO
+ *   - Footer tóm tắt số liệu đã kiểm chứng
+ *
+ * HỢP ĐỒNG MARKDOWN (analyst/AI phải viết đúng các mốc này):
+ *   ## ĐIỂM NHẤN — <tiêu đề in hoa>
+ *   ## PHẦN 1 — TIN TỨC CHÍNH / NỔI BẬT TRONG NGÀY
+ *      | Sản phẩm | Giá | Thay đổi / Ghi chú |
+ *      **Nguồn giá:** ...        **Lưu ý dữ liệu:** ...
+ *      ### QUỐC TẾ / ### VIỆT NAM  (bullet: - **Tiêu đề:** mô tả *(nguồn)*)
+ *   ## PHẦN 2 — NHẬN ĐỊNH & HÀNH ĐỘNG CHO STAVIAN
+ *      **TÍN HIỆU: <BUY|HOLD|SELL|THẬN TRỌNG>** — <dòng banner lớn>
+ *      <dòng phụ banner>
+ *      ### Bảng tín hiệu nhanh            (bảng 2 cột: nhãn | giá trị)
+ *      ### Động lực TĂNG & GIẢM           (▲ ... rồi ▼ ...)
+ *      ### Kịch bản → Hành động           (bảng 3 cột)
+ *      ### Chiến thuật giao dịch (mua/bán)(bullet: - **Nhãn:** nội dung)
+ *      ### Catalysts cần theo dõi         (bullet)
+ *      ### Gợi ý mô hình hợp tác – kinh doanh (bullet)
+ *      ### Lưu ý                          (hộp đỏ cuối Phần 2)
+ *   ## PHẦN 3 — CHI TIẾT CÁC TIN TỨC CHÍNH
+ *      I. QUỐC TẾ / II. VIỆT NAM  (1. **Tiêu đề** — nội dung *Nguồn: [x](url)*)
+ *      DANH MỤC NGUỒN THAM KHẢO   (1. [Tên](url) — ghi chú)
+ *   ## TÓM TẮT CUỐI                       (nội dung footer; tuỳ chọn)
+ *
+ * @param {string} markdown
+ * @param {Date} reportDate
+ * @param {string} author
+ * @returns {string} HTML đầy đủ
+ */
 function buildHtmlReport(markdown, reportDate, author) {
-  const viDate  = viDateString(reportDate);
-  const dispDate = `${String(reportDate.getDate()).padStart(2,'0')}/${String(reportDate.getMonth()+1).padStart(2,'0')}/${reportDate.getFullYear()}`;
+  const viDate   = viDateString(reportDate);
+  const dispDate = `${String(reportDate.getDate()).padStart(2, '0')}/${String(reportDate.getMonth() + 1).padStart(2, '0')}/${reportDate.getFullYear()}`;
   const autoTime = new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
 
-  // ── Detect signal từ markdown ──────────────────────────────────────────────
-  let signalStyle = 'background:#1E7A46;color:#fff;'; // HOLD mặc định
-  let signalLabel = 'NẮM GIỮ (HOLD)';
-  // Chỉ dò trong Phần 2 để khối ĐIỂM NHẤN ở đầu báo cáo không cướp mất khớp đầu tiên
-  const signalScope = markdown.split(/#{1,3}\s*PHẦN 2/i)[1] || markdown;
-  const sigMatch = signalScope.match(/TÍN HIỆU[^:]*:\s*(BUY|MUA|SELL|BÁN|HOLD|NẮM GIỮ)/i);
-  if (sigMatch) {
-    const sig = sigMatch[1].toUpperCase();
-    if (sig === 'BUY' || sig === 'MUA') {
-      signalStyle = 'background:#0369a1;color:#fff;';
-      signalLabel = 'MUA (BUY)';
-    } else if (sig === 'SELL' || sig === 'BÁN') {
-      signalStyle = 'background:#C0392B;color:#fff;';
-      signalLabel = 'BÁN (SELL)';
-    }
-  }
+  const lines = markdown.split('\n');
 
-  // ── Chuyển markdown cơ bản → HTML inline (dùng cho body từng phần) ─────────
-  function md(text) {
+  // ── Inline markdown → HTML ────────────────────────────────────────────────
+  function md(text, linkColor = '#1E7A46') {
     if (!text) return '';
+    const linkStyle = linkColor === '#fff'
+      ? 'color:#fff;text-decoration:underline;'
+      : `color:${linkColor};`;
     return text
-      // links trước bold để tránh conflict
-      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" style="color:#1E7A46;">$1</a>')
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, `<a href="$2" target="_blank" rel="noopener" style="${linkStyle}">$1</a>`)
       .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
       .replace(/\*(.+?)\*/g, '<em>$1</em>')
       .replace(/`(.+?)`/g, '<code style="background:#f0f0f0;padding:1px 4px;border-radius:3px;font-size:12px;">$1</code>');
   }
 
-  // ── Section header (xanh đậm với border) ───────────────────────────────────
-  function sectionH2(title) {
-    return `<h2 style="font-size:17px;color:#1E7A46;border-bottom:3px solid #1E7A46;padding-bottom:5px;margin:24px 0 12px;">${title}</h2>`;
-  }
-
-  function subHeader(title) {
-    return `<div style="background:#EAF1FB;font-weight:bold;color:#14532D;padding:5px 10px;margin:14px 0 8px;font-size:14px;">${title}</div>`;
-  }
-
-  function regionBadge(label) {
-    return `<div style="background:#E6F2EA;font-weight:bold;color:#14532D;padding:5px 10px;margin:14px 0 8px;font-size:14px;">${label}</div>`;
-  }
-
-  // ── Parse markdown thành các dòng/đoạn dễ xử lý ───────────────────────────
-  const lines = markdown.split('\n');
-
-  // Tách 3 phần chính
+  // ── Trích một phần theo mốc "## PHẦN n" ───────────────────────────────────
   function extractSection(marker) {
     const startRe = new RegExp(`^#{1,3}\\s*PHẦN ${marker}`, 'i');
-    const nextRe  = /^#{1,3}\s*PHẦN /i;
+    const nextRe  = /^#{1,3}\s*(PHẦN |TÓM TẮT CUỐI)/i;
     let inSection = false;
-    const result = [];
+    const out = [];
     for (const line of lines) {
       if (startRe.test(line)) { inSection = true; continue; }
-      if (inSection && nextRe.test(line) && !startRe.test(line)) break;
-      if (inSection) result.push(line);
+      if (inSection && nextRe.test(line)) break;
+      if (inSection) out.push(line);
     }
-    return result.join('\n');
+    return out.join('\n');
+  }
+
+  // ── Trích khối theo tiêu đề "## X" bất kỳ ────────────────────────────────
+  function extractBlock(headingRe) {
+    const stopRe = /^#{1,3}\s*(PHẦN |ĐIỂM NHẤN|TÓM TẮT CUỐI)/i;
+    let inBlock = false, title = '';
+    const body = [];
+    for (const line of lines) {
+      if (!inBlock && headingRe.test(line)) {
+        inBlock = true;
+        title = line.replace(/^#{1,3}\s*/, '').replace(/^[^—–-]*[—–-]\s*/, '').trim();
+        continue;
+      }
+      if (inBlock && stopRe.test(line)) break;
+      if (inBlock) body.push(line);
+    }
+    return inBlock ? { title, body: body.join('\n').trim() } : null;
   }
 
   const part1Text = extractSection('1');
   const part2Text = extractSection('2');
   const part3Text = extractSection('3');
 
-  // ── ĐIỂM NHẤN: khối hero đặt trước Phần 1 (theo mẫu 31/07) ────────────────
-  // Cú pháp markdown:
-  //   ## ĐIỂM NHẤN — <tiêu đề in hoa>
-  //   <đoạn phân tích>
-  //   *(Nguồn: ...)*
-  function extractHighlight() {
-    const startRe = new RegExp('^#{1,3}\\s*(?:🚨\\s*)?ĐIỂM NHẤN\\b', 'i');
-    const stopRe  = /^#{1,3}\s*(?:PHẦN |ĐIỂM NHẤN)/i;
-    let inBlock = false;
-    let title = '';
-    const body = [];
-    for (const line of lines) {
-      if (!inBlock && startRe.test(line)) {
-        inBlock = true;
-        title = line.replace(/^#{1,3}\s*(?:🚨\s*)?ĐIỂM NHẤN\s*[—–-]*\s*/i, '').trim();
-        continue;
-      }
-      if (inBlock && stopRe.test(line)) break;
-      if (inBlock) body.push(line);
-    }
-    if (!inBlock || !title) return '';
-
-    const paragraphs = body.join('\n').trim().split(/\n\s*\n/)
-      .map(p => p.trim()).filter(Boolean)
-      .map(p => `<div style="font-size:13px;line-height:1.6;margin-top:6px;text-align:justify;">${md(p.replace(/\n/g, ' '))}</div>`)
-      .join('');
-
-    return `
-    <div style="background:#FDF6E3;border:2px solid #C9A227;border-left:6px solid #C9A227;padding:12px 16px;margin:14px 0 4px;">
-      <div style="font-size:14px;font-weight:bold;color:#7A5C00;line-height:1.45;">🚨 ĐIỂM NHẤN — ${md(title)}</div>
-      ${paragraphs}
-    </div>`;
-  }
-  const highlightHtml = extractHighlight();
-
-  // ── Render bảng markdown (|col|col|) → HTML table ─────────────────────────
-  function renderTable(text, headerBg = '#1E7A46') {
-    const tableLines = text.split('\n').filter(l => l.trim().startsWith('|'));
-    if (tableLines.length === 0) return '';
-
-    let html = `<table style="border-collapse:collapse;width:100%;font-size:13px;margin:8px 0;">`;
-    let firstDataRow = true;
-    for (const line of tableLines) {
-      const cells = line.split('|').slice(1, -1).map(c => c.trim());
-      if (cells.every(c => /^[-:]+$/.test(c))) continue; // separator row
-      if (firstDataRow) {
-        html += `<tr style="background:${headerBg};color:#fff;">`;
-        cells.forEach(c => { html += `<th style="border:1px solid #ccc;padding:6px 8px;text-align:left;">${md(c)}</th>`; });
-        html += '</tr>';
-        firstDataRow = false;
+  // ── Tách các tiểu mục "### ..." trong một phần ────────────────────────────
+  function splitSubsections(text) {
+    const out = [];
+    let current = null;
+    for (const line of text.split('\n')) {
+      const h = line.match(/^#{3,4}\s*(.+)/);
+      if (h) {
+        if (current) out.push(current);
+        current = { title: h[1].trim(), body: [] };
+      } else if (current) {
+        current.body.push(line);
       } else {
-        const isAlt = tableLines.indexOf(line) % 2 === 0;
-        html += `<tr${isAlt ? ' style="background:#f7f9f8;"' : ''}>`;
-        cells.forEach((c, i) => {
-          // Stop-loss row: màu đỏ
-          const isStop = c.toLowerCase().includes('< ') || c.toLowerCase().includes('cắt lỗ') || c.toLowerCase().includes('stop');
-          const cellStyle = isStop
-            ? 'border:1px solid #ccc;padding:6px 8px;background:#FDECEA;color:#C0392B;font-weight:bold;'
-            : 'border:1px solid #ccc;padding:6px 8px;';
-          html += `<td style="${cellStyle}">${md(c)}</td>`;
-        });
-        html += '</tr>';
+        out.push({ title: null, body: [line] });
+        current = null;
       }
     }
-    html += '</table>';
-    return html;
+    if (current) out.push(current);
+    return out.map(s => ({ title: s.title, body: (s.body || []).join('\n').trim() }));
   }
 
-  // ── Render bullet list → HTML ul/li ───────────────────────────────────────
-  function renderList(text, indent = '20px') {
-    const items = text.split('\n')
-      .filter(l => /^[-*•➤]\s/.test(l.trim()) || /^\d+\.\s/.test(l.trim()))
-      .map(l => l.replace(/^[-*•➤\d.]+\s*/, '').trim());
-    if (items.length === 0) return '';
-    const lis = items.map(item => {
-      const isArrow = item.startsWith('➤') || item.startsWith('Lệnh') || item.startsWith('Mở') || item.startsWith('Quản') || item.startsWith('Tin');
-      return `<li style="margin-bottom:${isArrow ? '7' : '5'}px;">${md(item)}</li>`;
-    }).join('\n');
-    return `<ul style="margin:0 0 10px;padding-left:${indent};font-size:13.5px;line-height:1.55;">${lis}</ul>`;
+  function subHeader(title, marginTop = '16px') {
+    return `      <div style="background:#EAF1FB;font-weight:bold;color:#14532D;padding:5px 10px;margin:${marginTop} 0 8px;font-size:14px;">
+        ${title.replace(/&(?!amp;|lt;|gt;|#)/g, '&amp;')}</div>`;
   }
 
-  // ── Render paragraphs (non-table, non-list) ────────────────────────────────
-  function renderParagraphs(text) {
-    return text.split('\n\n')
-      .map(block => {
-        const trimmed = block.trim();
-        if (!trimmed) return '';
-        if (trimmed.startsWith('|')) return renderTable(trimmed);
-        if (/^[-*•➤\d]/.test(trimmed)) return renderList(trimmed);
-        if (/^#{1,4}\s/.test(trimmed)) {
-          const lvl = (trimmed.match(/^(#+)/) || ['', ''])[1].length;
-          const title = trimmed.replace(/^#+\s*/, '');
-          if (lvl <= 2) return subHeader(title);
-          return `<p style="font-size:14px;font-weight:bold;color:#14532D;margin:10px 0 4px;">${md(title)}</p>`;
-        }
-        return `<p style="font-size:13.5px;line-height:1.55;margin:0 0 10px;text-align:justify;">${md(trimmed)}</p>`;
-      })
-      .filter(Boolean)
-      .join('\n');
+  function regionBadge(label) {
+    return `      <div style="background:#E6F2EA;font-weight:bold;color:#14532D;padding:5px 10px;margin:14px 0 8px;font-size:14px;">
+        ${label}</div>`;
   }
 
-  // ── Render phần cảnh báo dữ liệu (nếu AI thêm) ────────────────────────────
-  function renderDataWarning(text) {
-    const warnMatch = text.match(/⚠[^<\n]+/);
-    if (!warnMatch) return '';
-    return `<div style="background:#FFF8E1;border-left:4px solid #F59E0B;padding:8px 14px;margin:10px 0;font-size:12.5px;color:#78350F;">${warnMatch[0]}</div>`;
+  function sectionH2(title, marginTop = '24px') {
+    return `      <h2 style="font-size:17px;color:#1E7A46;border-bottom:3px solid #1E7A46;padding-bottom:5px;margin:${marginTop} 0 12px;">
+        ${title}</h2>`;
   }
 
-  // ── Banner tín hiệu ────────────────────────────────────────────────────────
-  const signalSublineMatch = signalScope.match(/TÍN HIỆU[^\n]*\n([^\n]+)/i);
-  const signalSubline = signalSublineMatch ? signalSublineMatch[1].trim() : '';
-
-  const signalBanner = `
-  <div style="${signalStyle}text-align:center;padding:12px;border-radius:4px;margin-bottom:14px;">
-    <div style="font-size:20px;font-weight:bold;letter-spacing:.5px;">TÍN HIỆU HÔM NAY: ${signalLabel}</div>
-    ${signalSubline ? `<div style="font-size:13px;opacity:.9;margin-top:3px;">${md(signalSubline)}</div>` : ''}
-  </div>`;
-
-  // ── Bảng động lực 2 cột (▲ tăng | ▼ giảm) ────────────────────────────────
-  function renderDriversTable(text) {
-    const upMatch   = text.match(/▲[^▼]*/s);
-    const downMatch = text.match(/▼[\s\S]*/s);
-    if (!upMatch || !downMatch) return renderParagraphs(text);
-
-    const upItems   = upMatch[0].split('\n').filter(l => /^[•\-*]/.test(l.trim())).map(l => `<li style="margin-bottom:5px;">${md(l.replace(/^[•\-*]\s*/, ''))}</li>`).join('');
-    const downItems = downMatch[0].split('\n').filter(l => /^[•\-*]/.test(l.trim())).map(l => `<li style="margin-bottom:5px;">${md(l.replace(/^[•\-*]\s*/, ''))}</li>`).join('');
-
-    return `<table style="border-collapse:collapse;width:100%;font-size:13px;margin:8px 0;">
-  <tr>
-    <th style="border:1px solid #ccc;padding:6px 8px;background:#1E7A46;color:#fff;width:50%;text-align:left;">▲ ĐỘNG LỰC TĂNG GIÁ</th>
-    <th style="border:1px solid #ccc;padding:6px 8px;background:#C0392B;color:#fff;width:50%;text-align:left;">▼ ÁP LỰC GIẢM GIÁ</th>
-  </tr>
-  <tr>
-    <td style="border:1px solid #ccc;padding:8px;background:#E8F5EC;vertical-align:top;"><ul style="margin:0;padding-left:16px;">${upItems}</ul></td>
-    <td style="border:1px solid #ccc;padding:8px;background:#FDECEA;vertical-align:top;"><ul style="margin:0;padding-left:16px;">${downItems}</ul></td>
-  </tr>
-</table>`;
+  /** Các dòng bảng markdown → mảng ô, đã bỏ dòng phân cách */
+  function tableRows(text) {
+    return text.split('\n')
+      .filter(l => l.trim().startsWith('|'))
+      .map(l => l.split('|').slice(1, -1).map(c => c.trim()))
+      .filter(cells => !cells.every(c => /^[-:]+$/.test(c)));
   }
 
-  // ── Bảng kịch bản với màu hàng ────────────────────────────────────────────
-  function renderScenariosTable(text) {
-    const tableLines = text.split('\n').filter(l => l.trim().startsWith('|'));
-    if (tableLines.length < 2) return renderParagraphs(text);
+  /** Bullet markdown → mảng chuỗi (giữ nguyên inline markdown) */
+  function bulletItems(text) {
+    return text.split('\n')
+      .filter(l => /^\s*[-*•➤]\s+/.test(l))
+      .map(l => l.replace(/^\s*[-*•➤]\s+/, '').trim());
+  }
 
-    let html = `<table style="border-collapse:collapse;width:100%;font-size:13px;margin:8px 0;">`;
-    // Header
-    const headerCells = tableLines[0].split('|').slice(1, -1).map(c => c.trim());
-    html += `<tr>${headerCells.map(c => `<th style="border:1px solid #ccc;padding:6px 8px;background:#14532D;color:#fff;text-align:left;">${md(c)}</th>`).join('')}</tr>`;
+  // ══ ĐIỂM NHẤN ═════════════════════════════════════════════════════════════
+  function renderHighlight() {
+    const blk = extractBlock(/^#{1,3}\s*(?:🚨\s*)?ĐIỂM NHẤN\b/i);
+    if (!blk || !blk.title) return '';
+    const paras = blk.body.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
+    const bodyHtml = paras.map(p => md(p.replace(/\n/g, ' '), '#fff')).join('<br><br>\n        ');
+    return `      <!-- BREAKING -->
+      <div
+        style="background:#7A1E1E;color:#fff;padding:12px 14px;margin:12px 0 6px;border-radius:4px;font-size:13.5px;line-height:1.55;">
+        <b style="font-size:15px;">🚨 ĐIỂM NHẤN — ${md(blk.title, '#fff')}</b><br>
+        ${bodyHtml}</div>`;
+  }
 
-    const dataRows = tableLines.slice(1).filter(l => !l.split('|').slice(1,-1).every(c => /^[-:]+$/.test(c.trim())));
-    const rowStyles = ['background:#FCF3E2;color:#B7791F;', 'background:#E8F5EC;color:#1E7A46;', 'background:#FDECEA;color:#C0392B;'];
-    dataRows.forEach((row, i) => {
-      const cells = row.split('|').slice(1, -1).map(c => c.trim());
-      const [scenCell, ...rest] = cells;
-      html += `<tr><td style="border:1px solid #ccc;padding:6px 8px;${rowStyles[i] || ''}font-weight:bold;">${md(scenCell)}</td>`;
-      rest.forEach(c => { html += `<td style="border:1px solid #ccc;padding:6px 8px;">${md(c)}</td>`; });
-      html += '</tr>';
+  // ══ PHẦN 1: bảng giá 3 cột ════════════════════════════════════════════════
+  function renderPriceTable(text) {
+    const rows = tableRows(text);
+    if (rows.length === 0) return '';
+    const [header, ...data] = rows;
+
+    let html = `      <table style="border-collapse:collapse;width:100%;font-size:13px;margin:8px 0;">
+        <tr style="background:#1E7A46;color:#fff;">
+${header.map(c => `          <th style="border:1px solid #ccc;padding:6px 8px;text-align:left;">${md(c)}</th>`).join('\n')}
+        </tr>`;
+
+    data.forEach((cells, i) => {
+      const alt = i % 2 === 0 ? ' style="background:#f7f9f8;"' : '';
+      // Cột 3 quyết định màu cột giá: giảm → đỏ, tăng → xanh, còn lại để mộc
+      const changeCell = cells[2] || '';
+      let priceStyle = 'border:1px solid #ccc;padding:6px 8px;';
+      if (/^[^|]*?[−-]\s*\d|giảm|THỦNG/i.test(changeCell)) priceStyle += 'font-weight:bold;color:#C0392B;';
+      else if (/^[^|]*?\+\s*\d|tăng/i.test(changeCell)) priceStyle += 'font-weight:bold;color:#14532D;';
+
+      html += `\n        <tr${alt}>
+          <td style="border:1px solid #ccc;padding:6px 8px;font-weight:bold;">${md(cells[0] || '')}</td>
+          <td style="${priceStyle}">${md(cells[1] || '')}</td>
+          <td style="border:1px solid #ccc;padding:6px 8px;">${md(cells[2] || '')}</td>
+        </tr>`;
     });
-    html += '</table>';
-    return html;
+    return html + '\n      </table>';
   }
 
-  // ── Chiến thuật giao dịch (➤ prefix đặc biệt) ─────────────────────────────
-  function renderTactics(text) {
-    const items = text.split('\n').filter(l => /^[-*•➤]|^➤/.test(l.trim()));
-    if (items.length === 0) return renderParagraphs(text);
-    const lis = items.map(item => {
-      const clean = item.trim().replace(/^[-*•➤]\s*/, '');
-      // Bold phần trước dấu :
-      const formatted = clean.replace(/^([^:]+:)/, '<b style="color:#14532D;">➤ $1</b>');
-      return `<li style="margin-bottom:6px;">${md(formatted)}</li>`;
-    }).join('\n');
-    return `<ul style="margin:0 0 10px;padding-left:0;list-style:none;font-size:13.5px;line-height:1.55;">${lis}</ul>`;
+  function renderSourceBox(text) {
+    const m = text.match(/\*\*Nguồn giá:\*\*([^\n]*)/i) || text.match(/Nguồn giá:([^\n]*)/i);
+    if (!m) return '';
+    return `      <p style="font-size:12.5px;line-height:1.55;background:#EAF1FB;border-left:4px solid #1E7A46;padding:8px 12px;margin:6px 0 14px;">
+        <b>Nguồn giá:</b>${md(m[1])}
+      </p>`;
   }
 
-  // ── Tin chi tiết (Phần 3) ─────────────────────────────────────────────────
-  function renderDetailedNews(text) {
-    // Split theo numbered headlines
-    const blocks = text.split(/\n(?=\d+\.\s|\*\*\d+\.)/);
-    return blocks.map(block => {
-      const titleMatch = block.match(/^(?:\*\*)?(\d+)\.\s+(.+?)(?:\*\*)?$/m);
-      if (!titleMatch) return renderParagraphs(block);
-      const [, num, title] = titleMatch;
-      const body = block.replace(/^(?:\*\*)?(\d+)\.\s+(.+?)(?:\*\*)?$/m, '').trim();
-      return `<p style="font-size:14px;font-weight:bold;color:#14532D;margin:12px 0 4px;">${num}. ${md(title)}</p>
-<p style="font-size:13.5px;line-height:1.55;margin:0 0 10px;text-align:justify;">${md(body)}</p>`;
-    }).join('\n');
+  function renderDataNoteBox(text) {
+    const m = text.match(/\*\*Lưu ý dữ liệu:\*\*([\s\S]*?)(?=\n\s*\n|\n###|$)/i)
+           || text.match(/Lưu ý dữ liệu:([^\n]*)/i);
+    if (!m) return '';
+    return `      <p style="font-size:12.5px;line-height:1.55;background:#FCF3E2;border-left:4px solid #B7791F;padding:8px 12px;margin:0 0 14px;">
+        <b>Lưu ý dữ liệu:</b>${md(m[1].trim().replace(/\n/g, ' '))}
+      </p>`;
   }
 
-  // ── Danh mục nguồn ────────────────────────────────────────────────────────
-  function renderReferences(text) {
-    const items = text.split('\n').filter(l => /^\d+\./.test(l.trim()));
+  function renderNewsList(text) {
+    const items = bulletItems(text);
     if (items.length === 0) return '';
-    const lis = items.map(item => {
-      const clean = item.trim().replace(/^\d+\.\s*/, '');
-      return `<li>${md(clean)}</li>`;
-    }).join('\n');
-    return `<ol style="margin:0;padding-left:22px;font-size:12.5px;line-height:1.6;color:#1E7A46;">${lis}</ol>`;
+    const lis = items.map(it => `        <li style="margin-bottom:5px;">${md(it)}</li>`).join('\n');
+    return `      <ul style="margin:0 0 10px;padding-left:20px;font-size:13.5px;line-height:1.55;">
+${lis}
+      </ul>`;
   }
 
-  // ── Detect sub-sections trong Part 2 ────────────────────────────────────────
-  function renderPart2(text) {
-    const sections = [];
-    const sectionRe = /^#{1,4}\s*(Bảng tín hiệu|Động lực|Kịch bản|Chiến thuật|Lịch tin|Gợi ý kinh doanh|Lưu ý)/im;
+  // ══ PHẦN 2 ════════════════════════════════════════════════════════════════
+  const signalScope = markdown.split(/#{1,3}\s*PHẦN 2/i)[1] || markdown;
+  const sigMatch = signalScope.match(/\*\*TÍN HIỆU:\s*([^*]+?)\*\*\s*[—–-]?\s*([^\n]*)/i);
+  const sigWordRaw = sigMatch ? sigMatch[1].trim() : 'HOLD';
+  const sigWord = sigWordRaw.toUpperCase();
 
-    // Tách thành các blocks dựa trên sub-headers
-    const parts = text.split(/\n(?=#{1,4}\s)/);
-    for (const part of parts) {
-      const headerMatch = part.match(/^#{1,4}\s*(.+)/);
-      if (!headerMatch) {
-        // Phần đầu (banner + tín hiệu)
-        sections.push(signalBanner);
-        continue;
-      }
-      const headerTitle = headerMatch[1].trim();
-      const bodyText = part.replace(/^#{1,4}\s*.+\n/, '').trim();
+  let bannerBg = '#B7791F', bannerSubColor = '#F6E7C8'; // HOLD / trung tính
+  if (/BUY|MUA|TÍCH CỰC/.test(sigWord)) { bannerBg = '#1E7A46'; bannerSubColor = '#C8E6D4'; }
+  else if (/SELL|BÁN|THẬN TRỌNG|PHÒNG THỦ/.test(sigWord)) { bannerBg = '#7A1E1E'; bannerSubColor = '#F3D8D8'; }
 
-      if (/tín hiệu nhanh/i.test(headerTitle)) {
-        sections.push(subHeader('Bảng tín hiệu nhanh EUA'));
-        sections.push(renderTable(bodyText, '#14532D'));
-      } else if (/động lực/i.test(headerTitle)) {
-        sections.push(subHeader('Động lực thị trường EUA'));
-        sections.push(renderDriversTable(bodyText));
-      } else if (/kịch bản/i.test(headerTitle)) {
-        sections.push(subHeader('Kịch bản & hành động'));
-        sections.push(renderScenariosTable(bodyText));
-      } else if (/chiến thuật/i.test(headerTitle)) {
-        sections.push(subHeader('Chiến thuật giao dịch (mua/bán)'));
-        sections.push(renderTactics(bodyText));
-      } else if (/liên thị trường/i.test(headerTitle)) {
-        sections.push(subHeader('Tín hiệu liên thị trường'));
-        sections.push(renderParagraphs(bodyText));
-      } else if (/lịch tin|catalyst/i.test(headerTitle)) {
-        sections.push(subHeader('Lịch tin cần theo dõi (catalysts)'));
-        sections.push(renderList(bodyText));
-      } else if (/gợi ý|giải pháp/i.test(headerTitle)) {
-        sections.push(subHeader('Gợi ý kinh doanh / giải pháp'));
-        sections.push(renderList(bodyText));
-      } else if (/lưu ý/i.test(headerTitle)) {
-        sections.push(`<div style="border-top:1px solid #ccc;margin-top:12px;padding-top:6px;font-size:11px;color:#777;"><b>Lưu ý:</b> ${md(bodyText)}</div>`);
-      } else {
-        sections.push(subHeader(headerTitle));
-        sections.push(renderParagraphs(bodyText));
-      }
+  function renderSignalBanner(text) {
+    const headline = sigMatch ? sigMatch[2].trim() : '';
+    // dòng phụ = dòng không rỗng ngay sau dòng TÍN HIỆU
+    const afterLines = text.split('\n');
+    const idx = afterLines.findIndex(l => /\*\*TÍN HIỆU:/i.test(l));
+    let subline = '';
+    for (let i = idx + 1; i < afterLines.length; i++) {
+      const t = afterLines[i].trim();
+      if (!t) continue;
+      if (/^#{2,4}\s/.test(t)) break;
+      subline = t;
+      break;
     }
-    return sections.join('\n');
+    return `      <div style="background:${bannerBg};color:#fff;text-align:center;padding:12px;border-radius:4px;margin-bottom:14px;">
+        <div style="font-size:20px;font-weight:bold;letter-spacing:.5px;">TÍN HIỆU HÔM NAY: ${md(headline, '#fff')}</div>
+        ${subline ? `<div style="font-size:13px;color:${bannerSubColor};margin-top:3px;">${md(subline, '#fff')}</div>` : ''}
+      </div>`;
   }
 
-  // ── Assemble Part 1 ────────────────────────────────────────────────────────
-  const warn1 = renderDataWarning(part1Text);
+  /** Bảng tín hiệu nhanh: 2 cột nhãn | giá trị, ô giá trị tô màu theo sắc thái */
+  function renderQuickSignalTable(text) {
+    const rows = tableRows(text);
+    if (rows.length === 0) return '';
+    let html = `      <table style="border-collapse:collapse;width:100%;font-size:13px;">`;
+    rows.forEach((cells, i) => {
+      const label = cells[0] || '';
+      const value = cells[1] || '';
+      let style = 'border:1px solid #ccc;padding:6px 8px;';
+      if (/CẮT LỖ|stop-loss/i.test(label) || /↘|NGHIÊNG GIẢM|PHÒNG THỦ|SUY YẾU/i.test(value)) {
+        style += 'background:#FDECEA;color:#C0392B;font-weight:bold;';
+      } else if (/↔|GIẰNG CO|TRUNG TÍNH|THẬN TRỌNG|CHỜ/i.test(value)) {
+        style += 'background:#FCF3E2;color:#B7791F;font-weight:bold;';
+      } else if (/↗|NGHIÊNG TĂNG|TÍCH CỰC/i.test(value)) {
+        style += 'background:#E6F2EA;color:#14532D;font-weight:bold;';
+      } else {
+        style += 'color:#14532D;font-weight:bold;';
+      }
+      const widthAttr = i === 0 ? 'width:34%;' : '';
+      html += `\n        <tr>
+          <td style="border:1px solid #ccc;padding:6px 8px;background:#f2f2f2;font-weight:bold;${widthAttr}">${md(label)}</td>
+          <td style="${style}">${md(value)}</td>
+        </tr>`;
+    });
+    return html + '\n      </table>';
+  }
 
-  // Tìm bảng giá và tin tức trong part1
-  const priceTableMatch = part1Text.match(/((?:\|[^\n]+\|\n?)+)/);
-  const priceTableHtml = priceTableMatch ? renderTable(priceTableMatch[1]) : '';
-  const afterTable = priceTableMatch ? part1Text.slice(part1Text.indexOf(priceTableMatch[1]) + priceTableMatch[1].length) : part1Text;
+  /** Động lực TĂNG & GIẢM: 2 cột, các mục cách nhau bằng <br><br> */
+  function renderDriversTable(text) {
+    const upBlock   = (text.match(/▲[\s\S]*?(?=▼|$)/) || [''])[0];
+    const downBlock = (text.match(/▼[\s\S]*/) || [''])[0];
+    const cell = block => bulletItems(block).map(it => md(it)).join('<br><br>\n            ');
+    return `      <table style="border-collapse:collapse;width:100%;font-size:13px;">
+        <tr>
+          <th style="border:1px solid #ccc;padding:6px 8px;background:#E6F2EA;color:#14532D;text-align:left;width:50%;">▲ ĐỘNG LỰC TĂNG</th>
+          <th style="border:1px solid #ccc;padding:6px 8px;background:#FDECEA;color:#C0392B;text-align:left;">▼ ĐỘNG LỰC GIẢM</th>
+        </tr>
+        <tr>
+          <td style="border:1px solid #ccc;padding:8px;vertical-align:top;">
+            ${cell(upBlock)}
+          </td>
+          <td style="border:1px solid #ccc;padding:8px;vertical-align:top;">
+            ${cell(downBlock)}
+          </td>
+        </tr>
+      </table>`;
+  }
 
-  // Tách Quốc tế / Việt Nam
-  const intlMatch = afterTable.match(/QUỐC TẾ([\s\S]*?)(?=VIỆT NAM|$)/i);
-  const vnMatch   = afterTable.match(/VIỆT NAM([\s\S]*?)(?=PHẦN 2|$)/i);
+  /** Kịch bản → Hành động: 3 cột, cột Xác suất tô màu theo sắc thái kịch bản */
+  function renderScenarioTable(text) {
+    const rows = tableRows(text);
+    if (rows.length === 0) return '';
+    const [header, ...data] = rows;
+    let html = `      <table style="border-collapse:collapse;width:100%;font-size:13px;">
+        <tr style="background:#1E7A46;color:#fff;">
+          <th style="border:1px solid #ccc;padding:6px 8px;text-align:left;width:30%;">${md(header[0] || 'Kịch bản')}</th>
+          <th style="border:1px solid #ccc;padding:6px 8px;text-align:left;width:14%;">${md(header[1] || 'Xác suất')}</th>
+          <th style="border:1px solid #ccc;padding:6px 8px;text-align:left;">${md(header[2] || 'Hành động')}</th>
+        </tr>`;
+    data.forEach((cells, i) => {
+      const alt = i % 2 === 0 ? ' style="background:#f7f9f8;"' : '';
+      const scen = cells[0] || '';
+      const probColor = /thủng|giảm|cắt lỗ|mất|xấu/i.test(scen) ? '#C0392B'
+                      : /giữ|hồi|vượt|tăng|phục hồi/i.test(scen) ? '#14532D'
+                      : '#B7791F';
+      html += `\n        <tr${alt}>
+          <td style="border:1px solid #ccc;padding:6px 8px;font-weight:bold;">${md(scen)}</td>
+          <td style="border:1px solid #ccc;padding:6px 8px;font-weight:bold;color:${probColor};">${md(cells[1] || '')}</td>
+          <td style="border:1px solid #ccc;padding:6px 8px;">${md(cells[2] || '')}</td>
+        </tr>`;
+    });
+    return html + '\n      </table>';
+  }
 
-  const intlHtml = intlMatch ? renderList(intlMatch[1]) : '';
-  const vnHtml   = vnMatch   ? renderList(vnMatch[1]) : '';
+  /** Chiến thuật giao dịch: hộp xám, mỗi dòng mở đầu ➤ */
+  function renderTacticsBox(text) {
+    const items = bulletItems(text);
+    if (items.length === 0) return '';
+    const body = items.map(it => `➤ ${md(it)}`).join('<br><br>\n        ');
+    return `      <div style="font-size:13.5px;line-height:1.6;background:#f7f9f8;border:1px solid #ddd;padding:10px 14px;margin-bottom:12px;">
+        ${body}
+      </div>`;
+  }
 
-  // Dòng nguồn giá (thường là dòng italic sau bảng)
-  const sourceLine = afterTable.match(/Nguồn giá[^\n]*/i);
-  const sourceHtml = sourceLine
-    ? `<div style="font-size:11px;font-style:italic;color:#777;margin:5px 0 0;">${md(sourceLine[0])}</div>`
-    : '';
+  function renderPlainList(text) {
+    const items = bulletItems(text);
+    if (items.length === 0) return '';
+    const lis = items.map(it => `        <li style="margin-bottom:4px;">${md(it)}</li>`).join('\n');
+    return `      <ul style="margin:0 0 12px;padding-left:20px;font-size:13.5px;line-height:1.55;">
+${lis}
+      </ul>`;
+  }
 
-  // Khối "Lưu ý dữ liệu": ghi rõ số nào lấy từ đâu, đã kiểm chứng thế nào
-  const dataNote = afterTable.match(/L[ưu]u ý dữ liệu:[^\n]*/i);
-  const dataNoteHtml = dataNote
-    ? `<div style="background:#F4F7F5;border-left:4px solid #1E7A46;padding:8px 12px;margin:8px 0 0;font-size:11.5px;line-height:1.55;color:#3d4a42;text-align:justify;">${md(dataNote[0])}</div>`
-    : '';
+  function renderPart2Warning(text) {
+    if (!text) return '';
+    return `      <div style="background:#FDECEA;border:1px solid #C0392B;color:#C0392B;padding:9px 12px;margin:12px 0;font-size:12.5px;font-weight:bold;text-align:center;border-radius:4px;">
+        ⚠ ${md(text.replace(/\n/g, ' '))}
+      </div>`;
+  }
 
-  const part1Html = `
-    ${sectionH2('PHẦN 1 — TIN TỨC CHÍNH / NỔI BẬT TRONG NGÀY')}
-    ${warn1}
-    ${priceTableHtml}
-    ${sourceHtml}
-    ${dataNoteHtml}
-    ${regionBadge('QUỐC TẾ')}
-    ${intlHtml}
-    ${regionBadge('VIỆT NAM')}
-    ${vnHtml}`;
+  function renderPart2(text) {
+    const subs = splitSubsections(text);
+    const out = [];
+    for (const s of subs) {
+      if (!s.title) { out.push(renderSignalBanner(s.body)); continue; }
+      const t = s.title;
+      if (/tín hiệu nhanh/i.test(t))        { out.push(subHeader(t, '14px'), renderQuickSignalTable(s.body)); }
+      else if (/động lực/i.test(t))         { out.push(subHeader(t), renderDriversTable(s.body)); }
+      else if (/kịch bản/i.test(t))         { out.push(subHeader(t), renderScenarioTable(s.body)); }
+      else if (/chiến thuật/i.test(t))      { out.push(subHeader(t), renderTacticsBox(s.body)); }
+      else if (/lưu ý/i.test(t))            { out.push(renderPart2Warning(s.body)); }
+      else                                   { out.push(subHeader(t), renderPlainList(s.body)); }
+    }
+    return out.filter(Boolean).join('\n\n');
+  }
 
-  // ── Assemble Part 2 ────────────────────────────────────────────────────────
-  const part2Html = `
-    ${sectionH2('PHẦN 2 — NHẬN ĐỊNH & KHUYẾN NGHỊ GIAO DỊCH')}
-    ${renderPart2(part2Text)}`;
+  // ══ PHẦN 3 ════════════════════════════════════════════════════════════════
+  function renderDetailedNews(text) {
+    const blocks = text.split(/\n(?=\d+\.\s)/).map(b => b.trim()).filter(Boolean);
+    return blocks.map(block => {
+      const m = block.match(/^(\d+)\.\s+\*\*(.+?)\*\*\s*[—–-]?\s*([\s\S]*)$/);
+      if (!m) return '';
+      const [, num, title, body] = m;
+      return `      <p style="font-size:14px;font-weight:bold;color:#14532D;margin:12px 0 4px;">${num}. ${md(title)}</p>
+      <p style="font-size:13.5px;line-height:1.55;margin:0 0 10px;text-align:justify;">${md(body.replace(/\n/g, ' ').trim())}</p>`;
+    }).filter(Boolean).join('\n');
+  }
 
-  // ── Assemble Part 3 ────────────────────────────────────────────────────────
-  const intlDetailMatch = part3Text.match(/I\.\s*TIN TỨC QUỐC TẾ([\s\S]*?)(?=II\.|$)/i);
-  const vnDetailMatch   = part3Text.match(/II\.\s*TIN TỨC VIỆT NAM([\s\S]*?)(?=DANH MỤC|$)/i);
-  const refsMatch       = part3Text.match(/DANH MỤC NGUỒN([\s\S]*?)$/i);
+  function renderReferences(text) {
+    const items = text.split('\n').map(l => l.trim()).filter(l => /^\d+\.\s/.test(l));
+    if (items.length === 0) return '';
+    const lis = items.map(raw => {
+      const clean = raw.replace(/^\d+\.\s*/, '');
+      // "[Tên](url) — ghi chú"  →  link + ghi chú xám
+      const split = clean.match(/^(\[[^\]]+\]\([^)]+\))\s*[—–-]\s*(.+)$/);
+      if (split) {
+        return `        <li>${md(split[1])} — <span style="color:#777;">${md(split[2])}</span></li>`;
+      }
+      return `        <li>${md(clean)}</li>`;
+    }).join('\n');
+    return `      <ol style="margin:0;padding-left:22px;font-size:12.5px;line-height:1.6;color:#1E7A46;">
+${lis}
+      </ol>`;
+  }
 
-  const part3Html = `
-    ${sectionH2('PHẦN 3 — CHI TIẾT CÁC TIN TỨC CHÍNH')}
-    ${regionBadge('I. TIN TỨC QUỐC TẾ')}
-    ${intlDetailMatch ? renderDetailedNews(intlDetailMatch[1]) : renderParagraphs(part3Text)}
-    ${vnDetailMatch ? regionBadge('II. TIN TỨC VIỆT NAM') + renderDetailedNews(vnDetailMatch[1]) : ''}
-    ${refsMatch ? `<h2 style="font-size:15px;color:#1E7A46;border-bottom:2px solid #1E7A46;padding-bottom:4px;margin:22px 0 8px;">DANH MỤC NGUỒN THAM KHẢO</h2>${renderReferences(refsMatch[1])}` : ''}`;
+  // ══ Lắp ráp ═══════════════════════════════════════════════════════════════
+  const highlightHtml = renderHighlight();
 
-  // ── Final HTML document ────────────────────────────────────────────────────
+  /**
+   * Cắt đoạn giữa hai mốc theo VỊ TRÍ, không dùng lookahead có `$`:
+   * với cờ /m, `$` khớp cuối MỌI dòng nên vùng lazy dừng ngay dòng đầu → mất nội dung.
+   */
+  function sliceBetween(text, startRe, endRe) {
+    const s = text.match(startRe);
+    if (!s) return null;
+    const from = s.index + s[0].length;
+    const rest = text.slice(from);
+    const e = endRe ? rest.match(endRe) : null;
+    return e ? rest.slice(0, e.index) : rest;
+  }
+
+  const priceTableHtml = renderPriceTable(part1Text);
+  const intlMatch = sliceBetween(part1Text, /^#{3,4}\s*QUỐC TẾ[^\n]*$/im, /^#{3,4}\s*VIỆT NAM/im);
+  const vnMatch   = sliceBetween(part1Text, /^#{3,4}\s*VIỆT NAM[^\n]*$/im, null);
+
+  const part1Html = [
+    sectionH2('PHẦN 1 — TIN TỨC CHÍNH / NỔI BẬT TRONG NGÀY', '20px'),
+    priceTableHtml,
+    renderSourceBox(part1Text),
+    renderDataNoteBox(part1Text),
+    regionBadge('QUỐC TẾ'),
+    intlMatch ? renderNewsList(intlMatch) : '',
+    regionBadge('VIỆT NAM'),
+    vnMatch ? renderNewsList(vnMatch) : '',
+  ].filter(Boolean).join('\n');
+
+  const part2Title = (markdown.match(/^#{1,3}\s*(PHẦN 2[^\n]*)/im) || [, 'PHẦN 2 — NHẬN ĐỊNH & HÀNH ĐỘNG CHO STAVIAN'])[1].trim();
+  const part2Html = [
+    sectionH2(part2Title.replace(/&/g, '&amp;')),
+    renderPart2(part2Text),
+  ].join('\n');
+
+  const intlDetail = sliceBetween(part3Text, /^I\.\s*(?:TIN TỨC\s*)?QUỐC TẾ[^\n]*$/im, /^II\.\s/im);
+  const vnDetail   = sliceBetween(part3Text, /^II\.\s*(?:TIN TỨC\s*)?VIỆT NAM[^\n]*$/im, /^DANH MỤC NGUỒN/im);
+  const refs       = sliceBetween(part3Text, /^DANH MỤC NGUỒN[^\n]*$/im, null);
+
+  const part3Html = [
+    sectionH2('PHẦN 3 — CHI TIẾT CÁC TIN TỨC CHÍNH'),
+    regionBadge('I. QUỐC TẾ'),
+    intlDetail ? renderDetailedNews(intlDetail) : '',
+    vnDetail ? regionBadge('II. VIỆT NAM') : '',
+    vnDetail ? renderDetailedNews(vnDetail) : '',
+    refs ? `      <!-- ===== REFERENCES ===== -->
+      <h2 style="font-size:15px;color:#1E7A46;border-bottom:2px solid #1E7A46;padding-bottom:4px;margin:22px 0 8px;">
+        DANH MỤC NGUỒN THAM KHẢO</h2>` : '',
+    refs ? renderReferences(refs) : '',
+  ].filter(Boolean).join('\n');
+
+  const summaryBlock = extractBlock(/^#{1,3}\s*TÓM TẮT CUỐI/i);
+  const footerText = summaryBlock && summaryBlock.body
+    ? md(summaryBlock.body.replace(/\n/g, ' '))
+    : `Báo cáo tạo tự động cho Phòng CLPT — Stavian Industrial Metal · Không phải khuyến nghị đầu tư.`;
+
+  // ══ Tài liệu HTML ═════════════════════════════════════════════════════════
   return `<!DOCTYPE html>
 <html lang="vi">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tin tức thị trường Carbon - ${dispDate}</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tin tức thị trường Carbon - ${dispDate}</title>
 </head>
+
 <body style="margin:0;padding:0;background:#eef1f0;font-family:Arial,Helvetica,sans-serif;color:#222;">
-<div style="max-width:820px;margin:0 auto;background:#ffffff;">
+  <div style="max-width:820px;margin:0 auto;background:#ffffff;">
 
-  <!-- HEADER -->
-  <div style="background:#14532D;padding:18px 28px 8px;text-align:center;">
-    <div style="font-size:26px;font-weight:bold;color:#ffffff;letter-spacing:.3px;">TIN TỨC HÀNG NGÀY THỊ TRƯỜNG CARBON</div>
-    <div style="font-size:13px;color:#C8E6D4;letter-spacing:2px;margin-top:2px;">CARBON MARKET DAILY NEWS</div>
-  </div>
-  <div style="background:#1E7A46;padding:8px 28px;text-align:center;color:#fff;font-weight:bold;font-size:15px;">${viDate}</div>
-  <div style="padding:6px 28px 0;text-align:center;font-style:italic;color:#666;font-size:12px;">Người báo cáo: ${author}</div>
-  <div style="padding:3px 28px 0;text-align:right;font-size:10px;color:#aaa;font-style:italic;">Tạo tự động lúc ${autoTime}</div>
-  <div style="margin:8px 28px 0;text-align:center;"><a href="/carbondaily/archive.html" style="display:inline-block;background:#E6F2EA;color:#14532D;text-decoration:none;font-weight:bold;font-size:12px;padding:6px 14px;border-radius:5px;border:1px solid #bfe0cd;">📚 Xem lại báo cáo các ngày trước →</a></div>
+    <!-- HEADER -->
+    <div style="background:#1D6059;padding:18px 28px 8px;text-align:center;">
+      <div><img style="width: 150px" src="https://stavianmetal.com/wp-content/uploads/2023/05/logo_banner.png"/></div>
+      <br/>
 
-  <div style="padding:8px 28px 28px;">
-    ${highlightHtml}
-    ${part1Html}
-    ${part2Html}
-    ${part3Html}
-  </div>
+      <div style="font-size:26px;font-weight:bold;color:#ffffff;letter-spacing:.3px;">TIN TỨC HÀNG NGÀY THỊ TRƯỜNG
+        CARBON</div>
+      <div style="font-size:13px;color:#C8E6D4;letter-spacing:2px;margin-top:2px;">CARBON MARKET DAILY NEWS</div>
+    </div>
+    <div style="background:#1E7A46;padding:8px 28px;text-align:center;color:#fff;font-weight:bold;font-size:15px;">${viDate}</div>
+    <div style="padding:6px 28px 0;text-align:center;font-style:italic;color:#666;font-size:12px;">Người báo cáo: ${author}</div>
+    <div style="padding:3px 28px 0;text-align:right;font-size:10px;color:#aaa;font-style:italic;">Tạo tự động lúc ${autoTime}</div>
 
-  <div style="background:#14532D;color:#C8E6D4;text-align:center;padding:10px;font-size:11px;">
-    STAVIAN INDUSTRIAL METAL — Phòng CLPT, Team KD TCCB  |  Tin tức hàng ngày thị trường Carbon — ${dispDate}<br>
-    <span style="font-size:10px;">Báo cáo tổng hợp tự động có kiểm duyệt. Không phải khuyến nghị đầu tư.</span>
+    <div style="padding:8px 28px 28px;">
+
+${highlightHtml}
+
+${part1Html}
+
+      <!-- ===== PHẦN 2 ===== -->
+${part2Html}
+
+      <!-- ===== PHẦN 3 ===== -->
+${part3Html}
+
+      <div style="border-top:1px solid #ccc;margin-top:18px;padding-top:8px;font-size:10.5px;color:#999;text-align:center;font-style:italic;">
+        ${footerText}
+      </div>
+
+    </div>
   </div>
-</div>
 </body>
+
 </html>`;
 }
 
