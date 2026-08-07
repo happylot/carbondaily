@@ -182,7 +182,16 @@ Quét các mối liên hệ: khí TTF↑ → chi phí sản xuất nhôm↑, EUA
 
 ---
 
-## CẤU TRÚC BÁO CÁO (TUÂN THỦ NGHIÊM NGẶT — 3 PHẦN)
+## CẤU TRÚC BÁO CÁO (TUÂN THỦ NGHIÊM NGẶT — ĐIỂM NHẤN + 3 PHẦN)
+
+### ĐIỂM NHẤN (khối mở đầu, đặt TRƯỚC Phần 1)
+
+Mở đầu đúng dạng sau để template render được khối hero:
+
+## ĐIỂM NHẤN — [TIÊU ĐỀ IN HOA, 1 CÂU, CÓ SỐ CỤ THỂ]
+[Đoạn 4–8 câu: chuyện quan trọng nhất hôm nay — số đã xác minh, cơ chế nhân quả, và điều
+gì đã đổi so với báo cáo hôm qua. Nếu nhận định cũ sai thì nói thẳng ở đây.]
+*(Nguồn: [Tên](URL); [Tên](URL))*
 
 ### PHẦN 1 — TIN TỨC CHÍNH / NỔI BẬT TRONG NGÀY
 
@@ -209,7 +218,10 @@ NHÓM KIM LOẠI:
 - Quặng sắt (SGX): giá USD/tonne, % thay đổi, ghi chú nhu cầu Trung Quốc
 
 Nếu giá không có dữ liệu → ghi "N/A — xem ghi chú" và thêm ⚠ cảnh báo dữ liệu phía trên bảng.
-Cuối bảng: 1 dòng ghi nguồn + thời điểm lấy giá.
+Cuối bảng: 1 dòng bắt đầu bằng "Nguồn giá:" ghi nguồn + thời điểm lấy giá, nêu rõ đâu là NGUỒN CHÍNH.
+Ngay sau đó: 1 dòng bắt đầu bằng "Lưu ý dữ liệu:" (2–5 câu) — số nào lấy từ đâu, phiên nào,
+kiểm chứng bằng cách nào, độ lệch giữa nguồn chính và nguồn đối chiếu, số nào là proxy hoặc
+chưa xác minh được.
 
 **1b. Tin tức QUỐC TẾ** (bullet list, mỗi item: **Tiêu đề**: mô tả 1–2 câu. *([Nguồn](URL), DD/MM)*)
 Chọn tối đa 8 tin quan trọng nhất theo mức độ tác động, bao gồm TẤT CẢ 3 nhóm tài sản:
@@ -240,9 +252,11 @@ Dòng phụ: [3–4 điểm chốt: giá EUA hiện tại · tín hiệu liên t
 **2c. Bảng động lực EUA** (2 cột: ▲ TĂNG | ▼ GIẢM)
 Mỗi cột 4–5 bullet — có thể tích hợp tín hiệu từ TTF/năng lượng hoặc kim loại nếu có liên kết rõ ràng.
 
-**2d. Bảng kịch bản & hành động** (kịch bản cơ sở / tăng / giảm)
+**2d. Bảng kịch bản & hành động** — 3 cột: Kịch bản | Xác suất | Hành động.
+Nêu 4 kịch bản A–D, mỗi kịch bản gắn mức giá cụ thể; xác suất ghi Cao / Trung bình / Thấp.
+BẮT BUỘC có ít nhất một kịch bản xấu (giá thủng hỗ trợ hoặc mất dữ liệu).
 
-**2e. Chiến thuật giao dịch** (➤ Lệnh đang mở | ➤ Mở lệnh mới | ➤ Quản trị rủi ro | ➤ Tin chờ làm rõ)
+**2e. Chiến thuật giao dịch** (➤ Lệnh MỚI | ➤ Lệnh ĐANG NẮM GIỮ | ➤ Điểm CẮT LỖ tuyệt đối | ➤ Quản trị rủi ro | ➤ Kỳ mua bán tiếp theo)
 
 **2f. Tín hiệu liên thị trường** — BẮT BUỘC: phân tích liên kết giữa 3 nhóm hàng hôm nay.
 Nếu không có liên kết đáng chú ý → ghi "Không có tín hiệu liên thị trường mới" (không bịa).
@@ -432,7 +446,9 @@ function buildHtmlReport(markdown, reportDate, author) {
   // ── Detect signal từ markdown ──────────────────────────────────────────────
   let signalStyle = 'background:#1E7A46;color:#fff;'; // HOLD mặc định
   let signalLabel = 'NẮM GIỮ (HOLD)';
-  const sigMatch = markdown.match(/TÍN HIỆU[^:]*:\s*(BUY|MUA|SELL|BÁN|HOLD|NẮM GIỮ)/i);
+  // Chỉ dò trong Phần 2 để khối ĐIỂM NHẤN ở đầu báo cáo không cướp mất khớp đầu tiên
+  const signalScope = markdown.split(/#{1,3}\s*PHẦN 2/i)[1] || markdown;
+  const sigMatch = signalScope.match(/TÍN HIỆU[^:]*:\s*(BUY|MUA|SELL|BÁN|HOLD|NẮM GIỮ)/i);
   if (sigMatch) {
     const sig = sigMatch[1].toUpperCase();
     if (sig === 'BUY' || sig === 'MUA') {
@@ -488,6 +504,41 @@ function buildHtmlReport(markdown, reportDate, author) {
   const part1Text = extractSection('1');
   const part2Text = extractSection('2');
   const part3Text = extractSection('3');
+
+  // ── ĐIỂM NHẤN: khối hero đặt trước Phần 1 (theo mẫu 31/07) ────────────────
+  // Cú pháp markdown:
+  //   ## ĐIỂM NHẤN — <tiêu đề in hoa>
+  //   <đoạn phân tích>
+  //   *(Nguồn: ...)*
+  function extractHighlight() {
+    const startRe = new RegExp('^#{1,3}\\s*(?:🚨\\s*)?ĐIỂM NHẤN\\b', 'i');
+    const stopRe  = /^#{1,3}\s*(?:PHẦN |ĐIỂM NHẤN)/i;
+    let inBlock = false;
+    let title = '';
+    const body = [];
+    for (const line of lines) {
+      if (!inBlock && startRe.test(line)) {
+        inBlock = true;
+        title = line.replace(/^#{1,3}\s*(?:🚨\s*)?ĐIỂM NHẤN\s*[—–-]*\s*/i, '').trim();
+        continue;
+      }
+      if (inBlock && stopRe.test(line)) break;
+      if (inBlock) body.push(line);
+    }
+    if (!inBlock || !title) return '';
+
+    const paragraphs = body.join('\n').trim().split(/\n\s*\n/)
+      .map(p => p.trim()).filter(Boolean)
+      .map(p => `<div style="font-size:13px;line-height:1.6;margin-top:6px;text-align:justify;">${md(p.replace(/\n/g, ' '))}</div>`)
+      .join('');
+
+    return `
+    <div style="background:#FDF6E3;border:2px solid #C9A227;border-left:6px solid #C9A227;padding:12px 16px;margin:14px 0 4px;">
+      <div style="font-size:14px;font-weight:bold;color:#7A5C00;line-height:1.45;">🚨 ĐIỂM NHẤN — ${md(title)}</div>
+      ${paragraphs}
+    </div>`;
+  }
+  const highlightHtml = extractHighlight();
 
   // ── Render bảng markdown (|col|col|) → HTML table ─────────────────────────
   function renderTable(text, headerBg = '#1E7A46') {
@@ -563,7 +614,7 @@ function buildHtmlReport(markdown, reportDate, author) {
   }
 
   // ── Banner tín hiệu ────────────────────────────────────────────────────────
-  const signalSublineMatch = markdown.match(/TÍN HIỆU[^\n]*\n([^\n]+)/i);
+  const signalSublineMatch = signalScope.match(/TÍN HIỆU[^\n]*\n([^\n]+)/i);
   const signalSubline = signalSublineMatch ? signalSublineMatch[1].trim() : '';
 
   const signalBanner = `
@@ -723,11 +774,18 @@ function buildHtmlReport(markdown, reportDate, author) {
     ? `<div style="font-size:11px;font-style:italic;color:#777;margin:5px 0 0;">${md(sourceLine[0])}</div>`
     : '';
 
+  // Khối "Lưu ý dữ liệu": ghi rõ số nào lấy từ đâu, đã kiểm chứng thế nào
+  const dataNote = afterTable.match(/L[ưu]u ý dữ liệu:[^\n]*/i);
+  const dataNoteHtml = dataNote
+    ? `<div style="background:#F4F7F5;border-left:4px solid #1E7A46;padding:8px 12px;margin:8px 0 0;font-size:11.5px;line-height:1.55;color:#3d4a42;text-align:justify;">${md(dataNote[0])}</div>`
+    : '';
+
   const part1Html = `
     ${sectionH2('PHẦN 1 — TIN TỨC CHÍNH / NỔI BẬT TRONG NGÀY')}
     ${warn1}
     ${priceTableHtml}
     ${sourceHtml}
+    ${dataNoteHtml}
     ${regionBadge('QUỐC TẾ')}
     ${intlHtml}
     ${regionBadge('VIỆT NAM')}
@@ -772,6 +830,7 @@ function buildHtmlReport(markdown, reportDate, author) {
   <div style="margin:8px 28px 0;text-align:center;"><a href="/carbondaily/archive.html" style="display:inline-block;background:#E6F2EA;color:#14532D;text-decoration:none;font-weight:bold;font-size:12px;padding:6px 14px;border-radius:5px;border:1px solid #bfe0cd;">📚 Xem lại báo cáo các ngày trước →</a></div>
 
   <div style="padding:8px 28px 28px;">
+    ${highlightHtml}
     ${part1Html}
     ${part2Html}
     ${part3Html}
