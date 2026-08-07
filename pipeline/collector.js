@@ -10,6 +10,7 @@ const fetch = require('node-fetch');
 const { parseStringPromise } = require('xml2js');  // parse RSS
 const config = require('./config');
 const { log, logError, logWarn } = require('./logger');
+const { deriveEuaPrice } = require('./eua-anchor');
 
 // ─── Kiểu dữ liệu (JSDoc) ───────────────────────────────────────────────────
 /**
@@ -311,7 +312,7 @@ async function collectPrices() {
   // ── Xử lý riêng EUA ──────────────────────────────────────────────────────────
   // Giá tuyệt đối từ proxy KRBN (~34 USD) KHÔNG phải giá EUA thật (~75 €/tCO2).
   // Ưu tiên giá nhập tay (ICE); nếu không có thì chỉ giữ HƯỚNG (Δ%) và ẩn giá sai lệch.
-  applyEuaHandling(results.EUA);
+  await applyEuaHandling(results.EUA);
 
   const succeeded = Object.values(results).filter(r => r.status !== 'error').length;
   log('collector', `Thu thập giá hoàn tất: ${succeeded}/${config.prices.contracts.length} hợp đồng thành công`);
@@ -322,7 +323,7 @@ async function collectPrices() {
  * Điều chỉnh entry EUA theo giá nhập tay hoặc đánh dấu proxy rõ ràng.
  * @param {Object|undefined} eua - entry EUA trong results (mutate tại chỗ)
  */
-function applyEuaHandling(eua) {
+async function applyEuaHandling(eua) {
   if (!eua) return;
   const override = config.prices.euaOverride || {};
 
@@ -343,10 +344,42 @@ function applyEuaHandling(eua) {
     return;
   }
 
+  // Ưu tiên 2: giá neo do analyst nhập + tracker EUA futures (xem eua-anchor.js)
+  const proxyPrice = eua.price;      // giữ lại giá proxy trước khi ghi đè
+  const proxyChange = eua.changePct;
+  try {
+    const todayStr = new Date(
+      new Date().toLocaleString('en-US', { timeZone: config.schedule?.tz || 'Asia/Ho_Chi_Minh' })
+    ).toISOString().slice(0, 10);
+    const derived = await deriveEuaPrice(todayStr);
+    if (derived) {
+      eua.price     = derived.price;
+      eua.prevClose = derived.prevClose;
+      eua.changeAbs = derived.prevClose != null ? +(derived.price - derived.prevClose).toFixed(2) : null;
+      eua.changePct = derived.trackerChangePct;
+      eua.source    = `Neo analyst (${derived.anchor.source || 'n/a'}) + tracker ${derived.trackerTicker}`;
+      eua.status    = derived.ageDays === 0 ? 'ok' : 'derived';
+      eua.priceNote = derived.note;
+      eua.anchor    = {
+        price: derived.anchor.price,
+        date: derived.anchor.date,
+        source: derived.anchor.source,
+        ageDays: derived.ageDays,
+        confidence: derived.confidence,
+      };
+      eua.priceProxy = proxyPrice;
+      delete eua.error;
+      log('collector', `[EUA] ✓ Giá suy từ neo: ${eua.price} €/tCO2 (Δ ${eua.changePct ?? '?'}%, độ tin cậy ${derived.confidence})`);
+      return;
+    }
+  } catch (err) {
+    logError('collector', `[EUA] Suy giá từ neo thất bại: ${err.message}`);
+  }
+
   if (eua.status === 'error') return; // đã N/A sẵn, giữ nguyên
 
   // Chỉ có proxy KRBN → giữ hướng biến động, ẩn giá tuyệt đối sai lệch
-  const dir = eua.changePct;
+  const dir = proxyChange;
   eua.priceProxy = eua.price;   // lưu lại giá proxy để tham khảo/debug
   eua.price      = null;
   eua.changeAbs  = null;

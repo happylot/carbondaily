@@ -1,0 +1,21 @@
+{
+  "_huongDan": [
+    "GIÁ NEO EUA — analyst nhập tay giá EUA THẬT (EUR/tCO2), hệ thống tự suy ra giá các ngày sau",
+    "theo biến động của tracker CARB.L (WisdomTree Carbon ETC, bám hợp đồng EUA futures ICE),",
+    "đã quy đổi về EUR bằng tỷ giá EURUSD để loại nhiễu tỷ giá.",
+    "",
+    "CÁCH CẬP NHẬT: sửa 'price' + 'date' (+ 'source' nếu đổi nguồn), commit là xong.",
+    "TẦN SUẤT: tối thiểu 1 lần/tuần. Neo càng cũ, sai số càng lớn (trượt roll hợp đồng),",
+    "báo cáo sẽ tự hạ độ tin cậy và cảnh báo khi neo quá 7 ngày.",
+    "",
+    "Ưu tiên nguồn neo: (1) settlement ICE EUA Dec futures, (2) giá đấu giá EEX,",
+    "(3) trang giá thị trường (Investing.com...). Ghi rõ nguồn vào 'source'."
+  ],
+  "price": 82.50,
+  "date": "2026-08-07",
+  "currency": "EUR/tCO2",
+  "contract": "ICE EUA Futures (front Dec)",
+  "source": "Investing.com — Carbon Emissions Futures",
+  "sourceUrl": "https://vn.investing.com/commodities/carbon-emissions-streaming-chart",
+  "enteredBy": "Team KD Tín chỉ carbon, Phòng CLPT"
+}

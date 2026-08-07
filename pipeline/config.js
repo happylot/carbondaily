@@ -120,14 +120,16 @@ const config = {
         group: 'carbon',
         unit: 'EUR/tCO2',
         sources: [
-          // ICE EUA: dùng Yahoo Finance với ticker iPath Bloomberg Carbon ETN làm proxy
-          // Ticker KRBN (KraneShares Global Carbon ETF) - proxy EUA trên US markets
+          // Yahoo KHÔNG có hợp đồng EUA của ICE (EUA=F, CFI2=F, CO2.DE đều "no data").
+          // Nguồn chính: CARB.L — WisdomTree Carbon ETC (LSE), bám riêng hợp đồng EUA
+          // futures ICE nên biến động sát EUA hơn hẳn rổ carbon toàn cầu.
+          { url: 'https://query1.finance.yahoo.com/v8/finance/chart/CARB.L?interval=1d&range=5d', parser: 'yahoo' },
+          // Dự phòng: KRBN (KraneShares Global Carbon ETF) — rổ toàn cầu, EUA chỉ ~75%
           { url: 'https://query1.finance.yahoo.com/v8/finance/chart/KRBN?interval=1d&range=5d', parser: 'yahoo' },
-          // Dự phòng: 0P0001BIBY.F là EUA ICE futures trên Yahoo (DE:0P0001BIBY)  
-          { url: 'https://query1.finance.yahoo.com/v8/finance/chart/0P0001BIBY.F?interval=1d&range=5d', parser: 'yahoo' },
         ],
-        // Ghi chú: Yahoo Finance không cung cấp EUA ICE trực tiếp.
-        // KRBN là ETF carbon toàn cầu (EUA ~75% trọng số), dùng làm proxy.
+        // Ghi chú: Yahoo Finance không cung cấp EUA ICE trực tiếp. Giá EUA thật
+        // đến từ eua-anchor.json (analyst nhập tay) + tracker CARB.L quy đổi EUR —
+        // xem eua-anchor.js. Các source dưới đây chỉ còn là lớp proxy cuối cùng.
         // Để có giá EUA chính xác, nhập thủ công qua Report Builder hoặc
         // cấu hình thêm API trả phí (Refinitiv, Bloomberg, Ice Data Services).
         priceNote: 'Proxy via KRBN ETF. Giá EUA chính xác cần nhập thủ công.',
