@@ -9,7 +9,7 @@
 const fetch = require('node-fetch');
 const { parseStringPromise } = require('xml2js');  // parse RSS
 const config = require('./config');
-const { log, logError } = require('./logger');
+const { log, logError, logWarn } = require('./logger');
 
 // ─── Kiểu dữ liệu (JSDoc) ───────────────────────────────────────────────────
 /**
@@ -40,6 +40,8 @@ const { log, logError } = require('./logger');
  * @property {string}  tier        - 'A' | 'B' | 'C'
  * @property {string}  publishedAt - ISO date string
  * @property {boolean} isBreaking  - true nếu khớp từ khóa breaking
+ * @property {boolean} citable     - true nếu link mở được → đủ tư cách trích dẫn
+ * @property {string}  linkStatus  - 'ok' | 'paywalled' | 'http_<mã>' | 'unreachable' | 'unchecked'
  */
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -54,6 +56,33 @@ async function fetchWithTimeout(url, timeoutMs = 15_000, options = {}) {
   } finally {
     clearTimeout(timer);
   }
+}
+
+/** Chờ ms mili giây */
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Fetch có timeout + thử lại. Chỉ thử lại với lỗi mạng và 5xx —
+ * 4xx là câu trả lời dứt khoát của máy chủ, thử lại chỉ tốn thời gian.
+ */
+async function fetchWithRetry(url, { timeoutMs = 15_000, retries = 2, ...options } = {}) {
+  let lastError = null;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    if (attempt > 0) await sleep(1000 * 2 ** (attempt - 1));
+    try {
+      const res = await fetchWithTimeout(url, timeoutMs, options);
+      if (res.status >= 500 && attempt < retries) {
+        lastError = new Error(`HTTP ${res.status}`);
+        continue;
+      }
+      return res;
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  throw lastError ?? new Error('Không rõ lỗi');
 }
 
 /** Slug an toàn làm ID */
@@ -329,8 +358,10 @@ function applyEuaHandling(eua) {
 // ─── RSS Parser ───────────────────────────────────────────────────────────────
 
 async function fetchRssFeed(source) {
-  const res = await fetchWithTimeout(source.url, 12_000, {
-    headers: { 'User-Agent': 'Mozilla/5.0 CarbonIntelligence/1.0' },
+  const res = await fetchWithRetry(source.url, {
+    timeoutMs: 12_000,
+    retries: config.news.feedRetries ?? 2,
+    headers: { 'User-Agent': 'Mozilla/5.0 CarbonIntelligence/1.0', ...(source.headers || {}) },
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const xml = await res.text();
@@ -355,6 +386,130 @@ async function fetchRssFeed(source) {
   });
 }
 
+// ─── Kiểm tra link có mở được không ───────────────────────────────────────────
+
+// Trình duyệt thật: nhiều site (Cloudflare, WAF) chặn thẳng User-Agent lạ.
+const BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36';
+
+/**
+ * Phát hiện "soft 404": máy chủ trả 200 nhưng đã đá sang trang báo lỗi.
+ * Chỉ kết luận khi URL cuối khác URL ban đầu — nếu chính bài viết nằm ở
+ * đường dẫn chứa '404' thì không có chuyển hướng nào xảy ra, nên vẫn hợp lệ.
+ */
+function isSoftNotFound(originalUrl, finalUrl, patterns) {
+  if (!finalUrl || !patterns?.length) return false;
+  let from, to;
+  try {
+    from = new URL(originalUrl);
+    to = new URL(finalUrl);
+  } catch {
+    return false;
+  }
+  const samePage = from.hostname === to.hostname && from.pathname === to.pathname;
+  if (samePage) return false;
+  const path = to.pathname.toLowerCase();
+  return patterns.some(p => path === p || path.startsWith(`${p}.`) || path.startsWith(`${p}/`));
+}
+
+/**
+ * Kiểm tra một URL người đọc có mở được không.
+ * Thử HEAD trước cho nhẹ; nhiều CMS không hỗ trợ HEAD nên fallback sang GET.
+ * @returns {Promise<{citable: boolean, linkStatus: string}>}
+ */
+async function checkLink(url, opts, extraHeaders = {}) {
+  if (!url || !/^https?:\/\//i.test(url)) return { citable: false, linkStatus: 'invalid_url' };
+
+  const headers = { 'User-Agent': BROWSER_UA, Accept: 'text/html,application/xhtml+xml,*/*', ...extraHeaders };
+  let lastStatus = null;
+
+  for (const method of ['HEAD', 'GET']) {
+    try {
+      const res = await fetchWithRetry(url, {
+        method,
+        redirect: 'follow',
+        timeoutMs: opts.timeoutMs,
+        retries: opts.retries,
+        headers,
+      });
+      if (res.ok) {
+        return isSoftNotFound(url, res.url, opts.softNotFoundPatterns)
+          ? { citable: false, linkStatus: 'soft_404' }
+          : { citable: true, linkStatus: 'ok' };
+      }
+      lastStatus = res.status;
+      // 4xx từ HEAD có thể chỉ là "không hỗ trợ HEAD" → thử tiếp GET.
+      // 5xx đã được fetchWithRetry thử lại, tới đây coi như hỏng thật.
+      if (opts.blockedStatuses.includes(res.status) && method === 'GET') break;
+    } catch (err) {
+      lastStatus = lastStatus ?? 'network';
+    }
+  }
+
+  return {
+    citable: false,
+    linkStatus: typeof lastStatus === 'number' ? `http_${lastStatus}` : 'unreachable',
+  };
+}
+
+/**
+ * Gắn cờ citable/linkStatus cho từng bài, chạy song song có giới hạn.
+ * Bài từ nguồn `paywalled` bị loại ngay, không tốn lượt gọi mạng.
+ * @param {NewsItem[]} items
+ * @param {Set<string>} paywalledSources - tên nguồn đã biết là trả phí
+ * @param {Map<string, Object>} [sourceHeaders] - header riêng theo tên nguồn (VD: cookie thuê bao)
+ */
+async function annotateLinkAccessibility(items, paywalledSources, sourceHeaders = new Map()) {
+  const cfg = config.news.linkCheck || {};
+  if (cfg.enabled === false) {
+    items.forEach(it => { it.citable = true; it.linkStatus = 'unchecked'; });
+    return items;
+  }
+
+  const opts = {
+    timeoutMs: cfg.timeoutMs ?? 15_000,
+    retries: cfg.retries ?? 2,
+    blockedStatuses: cfg.blockedStatuses ?? [401, 402, 403, 404, 410, 451],
+    softNotFoundPatterns: cfg.softNotFoundPatterns ?? [],
+  };
+
+  const pending = items.filter(it => {
+    if (paywalledSources.has(it.source)) {
+      it.citable = false;
+      it.linkStatus = 'paywalled';
+      return false;
+    }
+    return true;
+  });
+
+  log('collector', `Kiểm tra link: ${pending.length} bài cần gọi mạng, ${items.length - pending.length} bài bỏ qua (nguồn trả phí)`);
+
+  const concurrency = Math.max(1, cfg.concurrency ?? 6);
+  let cursor = 0;
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, pending.length) }, async () => {
+      while (cursor < pending.length) {
+        const item = pending[cursor++];
+        const { citable, linkStatus } = await checkLink(item.url, opts, sourceHeaders.get(item.source));
+        item.citable = citable;
+        item.linkStatus = linkStatus;
+      }
+    })
+  );
+
+  return items;
+}
+
+/** Gộp số bài không trích dẫn được theo nguồn, để log rõ đã bỏ những gì */
+function summarizeUncitable(items) {
+  const bySource = new Map();
+  for (const it of items) {
+    if (it.citable) continue;
+    const key = `${it.source} [${it.linkStatus}]`;
+    bySource.set(key, (bySource.get(key) || 0) + 1);
+  }
+  return bySource;
+}
+
 // ─── Collect News ─────────────────────────────────────────────────────────────
 
 /**
@@ -364,6 +519,15 @@ async function fetchRssFeed(source) {
 async function collectNews() {
   log('collector', 'Bắt đầu thu thập tin tức...');
   const allItems = [];
+  const paywalledSources = new Set(
+    config.news.sources.filter(s => s.paywalled).map(s => s.name)
+  );
+  const sourceHeaders = new Map(
+    config.news.sources.filter(s => s.headers).map(s => [s.name, s.headers])
+  );
+  if (paywalledSources.size > 0) {
+    log('collector', `Nguồn trả phí (chỉ dùng làm bối cảnh, không trích dẫn): ${[...paywalledSources].join(', ')}`);
+  }
 
   await Promise.all(
     config.news.sources.map(async (source) => {
@@ -414,7 +578,28 @@ async function collectNews() {
     return new Date(b.publishedAt) - new Date(a.publishedAt);
   });
 
-  return deduped;
+  // Chỉ cho phép trích dẫn những link người đọc thực sự mở được
+  await annotateLinkAccessibility(deduped, paywalledSources, sourceHeaders);
+
+  const uncitable = summarizeUncitable(deduped);
+  if (uncitable.size > 0) {
+    const detail = [...uncitable.entries()].map(([k, n]) => `${k} ×${n}`).join('; ');
+    logWarn('collector', `Link không mở được → không đủ tư cách trích dẫn: ${detail}`);
+  }
+
+  const citable = deduped.filter(it => it.citable);
+  log('collector', `Tin đủ tư cách trích dẫn: ${citable.length}/${deduped.length} bài`);
+
+  if (citable.length === 0) {
+    logWarn('collector', '⚠ KHÔNG có tin nào trích dẫn được — báo cáo sẽ chỉ còn phần dữ liệu giá');
+  }
+
+  const carbonCitable = citable.filter(it => it.commodity === 'carbon').length;
+  if (carbonCitable === 0) {
+    logWarn('collector', '⚠ Không có tin CARBON nào trích dẫn được — vùng mù thông tin về chính sách ETS/EUA');
+  }
+
+  return config.news.dropUncitable === false ? deduped : citable;
 }
 
 module.exports = { collectPrices, collectNews };

@@ -187,18 +187,55 @@ const config = {
     maxArticlesPerSource: 50,
     maxAgeHours: 24,
     deduplicationThreshold: 0.8, // độ tương đồng
+    // `paywalled: true` → bài của nguồn này KHÔNG mở được cho người đọc phổ thông.
+    // Tiêu đề/tóm tắt trong RSS vẫn dùng được để nắm bối cảnh, nhưng link không
+    // đủ tư cách làm nguồn trích dẫn trong báo cáo (xem news.linkCheck bên dưới).
     sources: [
       // Quốc tế
-      { id: 'carbon_pulse', name: 'Carbon Pulse', url: 'https://carbon-pulse.com/feed/', type: 'rss', group: 'intl', tier: 'A' },
-      { id: 'reuters_energy', name: 'Reuters Commodities', url: 'https://feeds.reuters.com/reuters/companyNews', type: 'rss', group: 'intl', tier: 'A' },
+      // Feed mở, nhưng trang bài chặn Cloudflare + yêu cầu thuê bao trả phí (HTTP 403).
+      // Nếu công ty đã mua thuê bao: thêm cookie/token qua CARBON_PULSE_COOKIE rồi bỏ cờ paywalled.
+      {
+        id: 'carbon_pulse', name: 'Carbon Pulse', url: 'https://carbon-pulse.com/feed/',
+        type: 'rss', group: 'intl', tier: 'A',
+        paywalled: !process.env.CARBON_PULSE_COOKIE,
+        headers: process.env.CARBON_PULSE_COOKIE ? { Cookie: process.env.CARBON_PULSE_COOKIE } : undefined,
+      },
+      // Đã bỏ 'reuters_energy': feeds.reuters.com ngừng hoạt động (DNS ENOTFOUND),
+      // Reuters không còn cung cấp RSS công khai.
       { id: 'eia', name: 'EIA News', url: 'https://www.eia.gov/rss/todayinenergy.xml', type: 'rss', group: 'intl', tier: 'A' },
       { id: 'esg_today', name: 'ESG Today', url: 'https://www.esgtoday.com/feed/', type: 'rss', group: 'intl', tier: 'B' },
       { id: 'carbon_credits', name: 'CarbonCredits.com', url: 'https://carboncredits.com/feed/', type: 'rss', group: 'intl', tier: 'B' },
       // Việt Nam
       { id: 'vnexpress', name: 'VnExpress Kinh tế', url: 'https://vnexpress.net/rss/kinh-doanh.rss', type: 'rss', group: 'vn', tier: 'B' },
-      { id: 'vneconomy', name: 'VnEconomy', url: 'https://vneconomy.vn/rss/kinh-te.rss', type: 'rss', group: 'vn', tier: 'B' },
+      // vneconomy.vn dùng pattern '/<chuyên-mục>.rss'; '/rss/kinh-te.rss' trả về
+      // channel rỗng ("No Content") nên nguồn cũ luôn cho 0 bài.
+      { id: 'vneconomy_green', name: 'VnEconomy Kinh tế xanh', url: 'https://vneconomy.vn/kinh-te-xanh.rss', type: 'rss', group: 'vn', tier: 'A' },
+      { id: 'vneconomy_market', name: 'VnEconomy Thị trường', url: 'https://vneconomy.vn/thi-truong.rss', type: 'rss', group: 'vn', tier: 'B' },
       { id: 'baochinhphu', name: 'Báo Chính phủ', url: 'https://baochinhphu.vn/kinh-te.rss', type: 'rss', group: 'vn', tier: 'A' },
     ],
+
+    // ── Kiểm tra link trước khi cho phép trích dẫn ────────────────────────────
+    // Bài chỉ đủ tư cách trích dẫn khi URL thực sự mở được. Nguồn đánh dấu
+    // `paywalled` bị loại ngay, không cần gọi mạng.
+    linkCheck: {
+      enabled: process.env.SKIP_LINK_CHECK !== '1',
+      timeoutMs: 15_000,
+      concurrency: 6,
+      // Mã lỗi coi là "người đọc không mở được" → loại khỏi diện trích dẫn.
+      blockedStatuses: [401, 402, 403, 404, 410, 451],
+      // Lỗi mạng/5xx là tạm thời → thử lại trước khi kết luận.
+      retries: 2,
+      // Một số site (VD: vnexpress.net) trả "soft 404": bài không tồn tại vẫn
+      // cho HTTP 200 nhưng chuyển hướng sang trang báo lỗi. Chỉ xét khi URL cuối
+      // KHÁC URL ban đầu, để không loại nhầm bài có số 404 trong đường dẫn.
+      softNotFoundPatterns: ['/404', '/not-found', '/notfound', '/error'],
+    },
+    // true  → collectNews() chỉ trả về bài có link mở được (mặc định, an toàn cho báo cáo)
+    // false → trả về tất cả, mỗi bài mang cờ `citable`/`linkStatus` để bước sau tự lọc
+    dropUncitable: process.env.KEEP_UNCITABLE !== '1',
+
+    // Số lần thử lại khi tải RSS gặp lỗi mạng hoặc 5xx (VD: Báo Chính phủ trả 503 tạm thời)
+    feedRetries: 2,
     // Từ khóa phân loại nhóm hàng
     groupKeywords: {
       energy: ['oil', 'crude', 'brent', 'wti', 'gas', 'lng', 'ttf', 'opec', 'refinery', 'dầu', 'khí', 'năng lượng', 'petroleum', 'eia', 'rig count'],

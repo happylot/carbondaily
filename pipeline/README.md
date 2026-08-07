@@ -72,8 +72,33 @@ npm run collect
 > **Nhập giá EUA thật (khuyến nghị mỗi sáng)**: đặt `EUA_PRICE_OVERRIDE=76.55` (và tuỳ chọn `EUA_PREVCLOSE_OVERRIDE=76.96` để tính Δ ngày) trong `.env`. Giá lấy từ ICE/Trading Economics/Refinitiv/Bloomberg.
 
 ### Tin tức (RSS)
-- **Quốc tế**: Carbon Pulse, Reuters, EIA, ESG Today, CarbonCredits.com
-- **Việt Nam**: VnExpress, Báo Chính phủ
+- **Quốc tế**: Carbon Pulse (⚠ trả phí), EIA, ESG Today, CarbonCredits.com
+- **Việt Nam**: VnExpress Kinh tế, VnEconomy Kinh tế xanh, VnEconomy Thị trường, Báo Chính phủ
+
+> Đã bỏ **Reuters Commodities**: `feeds.reuters.com` ngừng hoạt động (DNS ENOTFOUND), Reuters không còn cấp RSS công khai.
+
+### Kiểm tra link trước khi trích dẫn
+
+Mỗi bài đều được kiểm tra URL có thực sự mở được không trước khi lọt vào báo cáo. Bài không đạt bị loại khỏi kết quả `collectNews()` và được log rõ theo từng nguồn.
+
+| `linkStatus` | Ý nghĩa |
+|--------------|---------|
+| `ok` | Mở được — đủ tư cách trích dẫn |
+| `paywalled` | Nguồn đánh dấu trả phí trong config, loại ngay không gọi mạng |
+| `http_403` / `http_404` / … | Máy chủ từ chối hoặc bài không tồn tại |
+| `soft_404` | Trả HTTP 200 nhưng chuyển hướng sang trang báo lỗi (VD: `vnexpress.net/404.html`) |
+| `unreachable` | Lỗi mạng/DNS sau khi đã thử lại |
+| `unchecked` | Đã tắt kiểm tra bằng `SKIP_LINK_CHECK=1` |
+
+> **Carbon Pulse**: feed RSS mở bình thường nhưng **trang bài chặn Cloudflare + yêu cầu thuê bao (HTTP 403)** — toàn bộ 10/10 bài đều không mở được. Nguồn này được đánh dấu `paywalled` nên tiêu đề/tóm tắt vẫn thu về làm bối cảnh, còn link thì không được dùng làm nguồn dẫn. Nếu công ty đã mua thuê bao, đặt `CARBON_PULSE_COOKIE` trong `.env` — cờ `paywalled` tự tắt và cookie được gửi kèm cả khi tải feed lẫn khi kiểm tra link.
+
+### Biến môi trường liên quan
+
+| Biến | Tác dụng |
+|------|----------|
+| `CARBON_PULSE_COOKIE` | Cookie thuê bao Carbon Pulse; đặt vào để mở khoá trích dẫn nguồn này |
+| `SKIP_LINK_CHECK=1` | Bỏ qua kiểm tra link (chạy nhanh khi debug) — mọi bài coi như hợp lệ |
+| `KEEP_UNCITABLE=1` | Giữ lại cả bài không mở được, kèm cờ `citable`/`linkStatus` để bước sau tự lọc |
 
 ## Log
 
