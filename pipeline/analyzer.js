@@ -536,21 +536,23 @@ function buildHtmlReport(markdown, reportDate, author) {
   // ── Tách các tiểu mục "### ..." trong một phần ────────────────────────────
   function splitSubsections(text) {
     const out = [];
-    let current = null;
+    // Phần mở đầu (trước "###" đầu tiên) là MỘT khối duy nhất — gom chung, không
+    // tách theo dòng, nếu không mỗi dòng sẽ thành một section và banner tín hiệu
+    // bị render lặp lại đúng bằng số dòng.
+    let current = { title: null, body: [] };
     for (const line of text.split('\n')) {
       const h = line.match(/^#{3,4}\s*(.+)/);
       if (h) {
-        if (current) out.push(current);
+        out.push(current);
         current = { title: h[1].trim(), body: [] };
-      } else if (current) {
-        current.body.push(line);
       } else {
-        out.push({ title: null, body: [line] });
-        current = null;
+        current.body.push(line);
       }
     }
-    if (current) out.push(current);
-    return out.map(s => ({ title: s.title, body: (s.body || []).join('\n').trim() }));
+    out.push(current);
+    return out
+      .map(s => ({ title: s.title, body: (s.body || []).join('\n').trim() }))
+      .filter(s => s.title || s.body);
   }
 
   function subHeader(title, marginTop = '16px') {
